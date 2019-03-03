@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * used to read reassembled records
+ * @author Julien Le Dem
  *
  * @param <T> the type of the materialized record
  */
@@ -127,8 +128,7 @@ class RecordReaderImplementation<T> extends RecordReader<T> {
 //    }
 
     public boolean equals(Case other) {
-      return other != null
-          && startLevel == other.startLevel
+      return startLevel == other.startLevel
           && depth == other.depth
           && nextLevel == other.nextLevel
           && nextState == other.nextState

@@ -22,7 +22,11 @@ import java.io.File;
 
 
 /**
+ *
  * Uses directly loader and storer to bypass the scheduling overhead
+ *
+ * @author Julien Le Dem
+ *
  */
 public class PerfTestReadAllCols {
 

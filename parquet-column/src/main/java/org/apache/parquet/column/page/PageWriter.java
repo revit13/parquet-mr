@@ -26,6 +26,9 @@ import org.apache.parquet.column.statistics.Statistics;
 
 /**
  * a writer for all the pages of a given column chunk
+ *
+ * @author Julien Le Dem
+ *
  */
 public interface PageWriter {
 
@@ -37,25 +40,9 @@ public interface PageWriter {
    * @param rlEncoding repetition level encoding
    * @param dlEncoding definition level encoding
    * @param valuesEncoding values encoding
-   * @throws IOException if there is an exception while writing page data
-   * @deprecated will be removed in 2.0.0. This method does not support writing column indexes; Use
-   *             {@link #writePage(BytesInput, int, int, Statistics, Encoding, Encoding, Encoding)} instead
-   */
-  @Deprecated
-  void writePage(BytesInput bytesInput, int valueCount, Statistics<?> statistics, Encoding rlEncoding, Encoding dlEncoding, Encoding valuesEncoding) throws IOException;
-
-  /**
-   * writes a single page
-   * @param bytesInput the bytes for the page
-   * @param valueCount the number of values in that page
-   * @param rowCount the number of rows in that page
-   * @param statistics the statistics for that page
-   * @param rlEncoding repetition level encoding
-   * @param dlEncoding definition level encoding
-   * @param valuesEncoding values encoding
    * @throws IOException
    */
-  void writePage(BytesInput bytesInput, int valueCount, int rowCount, Statistics<?> statistics, Encoding rlEncoding, Encoding dlEncoding, Encoding valuesEncoding) throws IOException;
+  void writePage(BytesInput bytesInput, int valueCount, Statistics<?> statistics, Encoding rlEncoding, Encoding dlEncoding, Encoding valuesEncoding) throws IOException;
 
   /**
    * writes a single page in the new format
@@ -67,7 +54,8 @@ public interface PageWriter {
    * @param dataEncoding the encoding for the data
    * @param data the data encoded with dataEncoding
    * @param statistics optional stats for this page
-   * @throws IOException if there is an exception while writing page data
+   * @param metadata optional free form key values
+   * @throws IOException
    */
   void writePageV2(
       int rowCount, int nullCount, int valueCount,
@@ -82,14 +70,13 @@ public interface PageWriter {
   long getMemSize();
 
   /**
-   * @return the allocated size for the buffer ( &gt; getMemSize() )
+   * @return the allocated size for the buffer ( > getMemSize() )
    */
   long allocatedSize();
 
   /**
    * writes a dictionary page
    * @param dictionaryPage the dictionary page containing the dictionary data
-   * @throws IOException if there was an exception while writing
    */
   void writeDictionaryPage(DictionaryPage dictionaryPage) throws IOException;
 

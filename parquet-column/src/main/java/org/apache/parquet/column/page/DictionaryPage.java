@@ -28,6 +28,9 @@ import org.apache.parquet.column.Encoding;
 
 /**
  * Data for a dictionary page
+ *
+ * @author Julien Le Dem
+ *
  */
 public class DictionaryPage extends Page {
 

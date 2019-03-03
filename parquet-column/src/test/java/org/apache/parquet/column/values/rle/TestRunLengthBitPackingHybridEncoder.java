@@ -27,26 +27,18 @@ import java.util.List;
 
 import org.junit.Test;
 
-import org.apache.parquet.bytes.DirectByteBufferAllocator;
 import org.apache.parquet.bytes.BytesUtils;
 import org.apache.parquet.column.values.bitpacking.BytePacker;
 import org.apache.parquet.column.values.bitpacking.Packer;
 
+/**
+ * @author Alex Levenson
+ */
 public class TestRunLengthBitPackingHybridEncoder {
-
-  private RunLengthBitPackingHybridEncoder getRunLengthBitPackingHybridEncoder() {
-    return getRunLengthBitPackingHybridEncoder(3, 5, 10);
-  }
-
-  private RunLengthBitPackingHybridEncoder getRunLengthBitPackingHybridEncoder(
-      int bitWidth, int initialCapacity, int pageSize) {
-    return new RunLengthBitPackingHybridEncoder(bitWidth, initialCapacity,
-        pageSize, new DirectByteBufferAllocator());
-  }
 
   @Test
   public void testRLEOnly() throws Exception {
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder();
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(3, 5, 10);
     for (int i = 0; i < 100; i++) {
       encoder.writeInt(4);
     }
@@ -76,7 +68,7 @@ public class TestRunLengthBitPackingHybridEncoder {
     // make sure that repeated 0s at the beginning
     // of the stream don't trip up the repeat count
 
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder();
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(3, 5, 10);
     for (int i = 0; i < 10; i++) {
       encoder.writeInt(0);
     }
@@ -94,7 +86,7 @@ public class TestRunLengthBitPackingHybridEncoder {
 
   @Test
   public void testBitWidthZero() throws Exception {
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder(0, 5, 10);
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(0, 5, 10);
     for (int i = 0; i < 10; i++) {
       encoder.writeInt(0);
     }
@@ -110,7 +102,8 @@ public class TestRunLengthBitPackingHybridEncoder {
 
   @Test
   public void testBitPackingOnly() throws Exception {
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder();
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(3, 5, 10);
+
     for (int i = 0; i < 100; i++) {
       encoder.writeInt(i % 3);
     }
@@ -132,7 +125,7 @@ public class TestRunLengthBitPackingHybridEncoder {
 
   @Test
   public void testBitPackingOverflow() throws Exception {
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder();
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(3, 5, 10);
 
     for (int i = 0; i < 1000; i++) {
       encoder.writeInt(i % 3);
@@ -164,7 +157,7 @@ public class TestRunLengthBitPackingHybridEncoder {
 
   @Test
   public void testTransitionFromBitPackingToRle() throws Exception {
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder();
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(3, 5, 10);
 
     // 5 obviously bit-packed values
     encoder.writeInt(0);
@@ -202,7 +195,7 @@ public class TestRunLengthBitPackingHybridEncoder {
 
   @Test
   public void testPaddingZerosOnUnfinishedBitPackedRuns() throws Exception {
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder(5, 5, 10);
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(5, 5, 10);
     for (int i = 0; i < 9; i++) {
       encoder.writeInt(i+1);
     }
@@ -221,7 +214,7 @@ public class TestRunLengthBitPackingHybridEncoder {
 
   @Test
   public void testSwitchingModes() throws Exception {
-    RunLengthBitPackingHybridEncoder encoder = getRunLengthBitPackingHybridEncoder(9, 100, 1000);
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(9, 100, 1000);
 
     // rle first
     for (int i = 0; i < 25; i++) {

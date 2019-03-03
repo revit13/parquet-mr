@@ -20,6 +20,9 @@ package org.apache.parquet;
 
 /**
  * Utility for parameter validation
+ *
+ * @author Julien Le Dem
+ *
  */
 public final class Preconditions {
   private Preconditions() { }
@@ -27,7 +30,6 @@ public final class Preconditions {
   /**
    * @param o the param to check
    * @param name the name of the param for the error message
-   * @param <T> the type of the object
    * @return the validated o
    * @throws NullPointerException if o is null
    */

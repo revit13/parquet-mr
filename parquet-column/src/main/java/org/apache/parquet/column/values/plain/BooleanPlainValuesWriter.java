@@ -18,7 +18,6 @@
  */
 package org.apache.parquet.column.values.plain;
 
-
 import static org.apache.parquet.column.Encoding.PLAIN;
 import static org.apache.parquet.column.values.bitpacking.Packer.LITTLE_ENDIAN;
 import org.apache.parquet.bytes.BytesInput;
@@ -29,6 +28,9 @@ import org.apache.parquet.column.values.bitpacking.ByteBitPackingValuesWriter;
 
 /**
  * An implementation of the PLAIN encoding
+ *
+ * @author Julien Le Dem
+ *
  */
 public class BooleanPlainValuesWriter extends ValuesWriter {
 
@@ -56,11 +58,6 @@ public class BooleanPlainValuesWriter extends ValuesWriter {
   @Override
   public void reset() {
     bitPackingWriter.reset();
-  }
-
-  @Override
-  public void close() {
-    bitPackingWriter.close();
   }
 
   @Override

@@ -22,74 +22,66 @@ import org.apache.parquet.io.api.Binary;
 
 /**
  * writer for (repetition level, definition level, values) triplets
+ *
+ * @author Julien Le Dem
+ *
  */
 public interface ColumnWriter {
 
   /**
    * writes the current value
-   * @param value an int value
-   * @param repetitionLevel a repetition level
-   * @param definitionLevel a definition level
+   * @param value
+   * @param repetitionLevel
+   * @param definitionLevel
    */
   void write(int value, int repetitionLevel, int definitionLevel);
 
   /**
    * writes the current value
-   * @param value a long value
-   * @param repetitionLevel a repetition level
-   * @param definitionLevel a definition level
+   * @param value
+   * @param repetitionLevel
+   * @param definitionLevel
    */
   void write(long value, int repetitionLevel, int definitionLevel);
 
   /**
    * writes the current value
-   * @param value a boolean value
-   * @param repetitionLevel a repetition level
-   * @param definitionLevel a definition level
+   * @param value
+   * @param repetitionLevel
+   * @param definitionLevel
    */
   void write(boolean value, int repetitionLevel, int definitionLevel);
 
   /**
    * writes the current value
-   * @param value a Binary value
-   * @param repetitionLevel a repetition level
-   * @param definitionLevel a definition level
+   * @param value
+   * @param repetitionLevel
+   * @param definitionLevel
    */
   void write(Binary value, int repetitionLevel, int definitionLevel);
 
   /**
    * writes the current value
-   * @param value a float value
-   * @param repetitionLevel a repetition level
-   * @param definitionLevel a definition level
+   * @param value
+   * @param repetitionLevel
+   * @param definitionLevel
    */
   void write(float value, int repetitionLevel, int definitionLevel);
 
   /**
    * writes the current value
-   * @param value a double value
-   * @param repetitionLevel a repetition level
-   * @param definitionLevel a definition level
+   * @param value
+   * @param repetitionLevel
+   * @param definitionLevel
    */
   void write(double value, int repetitionLevel, int definitionLevel);
 
   /**
    * writes the current null value
-   * @param repetitionLevel a repetition level
-   * @param definitionLevel a definition level
+   * @param repetitionLevel
+   * @param definitionLevel
    */
   void writeNull(int repetitionLevel, int definitionLevel);
 
- /**
-  * Close the underlying store. This should be called when there are no
-  * more data to be written.
-  */
-  void close();
-
-  /**
-   * used to decide when to write a page or row group
-   * @return the number of bytes of memory used to buffer the current data
-   */
-  long getBufferedSizeInMemory();
 }
 

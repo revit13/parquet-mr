@@ -57,12 +57,6 @@ public class MemPageWriter implements PageWriter {
   }
 
   @Override
-  public void writePage(BytesInput bytesInput, int valueCount, int rowCount, Statistics<?> statistics,
-      Encoding rlEncoding, Encoding dlEncoding, Encoding valuesEncoding) throws IOException {
-    writePage(bytesInput, valueCount, statistics, rlEncoding, dlEncoding, valuesEncoding);
-  }
-
-  @Override
   public void writePageV2(int rowCount, int nullCount, int valueCount,
       BytesInput repetitionLevels, BytesInput definitionLevels,
       Encoding dataEncoding, BytesInput data, Statistics<?> statistics) throws IOException {
@@ -114,4 +108,5 @@ public class MemPageWriter implements PageWriter {
     return String.format("%s %,d bytes", prefix, memSize);
 
   }
+
 }

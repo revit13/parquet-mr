@@ -1,4 +1,4 @@
-/*
+/* 
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -99,7 +99,6 @@ public class Main {
       ustr = ustr + " " + usage[0];
     }
 
-    format.printWrapped(err, WIDTH, name + ":\n" + command.getCommandDescription());
     format.printUsage(err, WIDTH, ustr);
     format.printWrapped(err, WIDTH, LEFT_PAD, "where option is one of:");
     format.printOptions(err, WIDTH, options, LEFT_PAD, DESC_PAD);
@@ -151,10 +150,9 @@ public class Main {
     }
 
     if (usage) {
-      if (name == null && command == null) {
-        showUsage();
-      }
-      else {
+      if (name != null && command != null) {
+        showUsage(name, command);
+      } else {
         showUsage(name, command);
       }
     }
@@ -163,7 +161,7 @@ public class Main {
   }
 
   public static void die(Throwable th, boolean usage, String name, Command command) {
-    die(th.toString(), usage, name, command);
+    die(th.getMessage(), usage, name, command);
   }
 
   public static void main(String[] args) {
@@ -201,6 +199,7 @@ public class Main {
     }
 
     boolean debug = false;
+    Options options = mergeOptions(OPTIONS, command.getOptions());
     try {
       String[] cargs = Arrays.copyOfRange(args, 1, args.length);
 

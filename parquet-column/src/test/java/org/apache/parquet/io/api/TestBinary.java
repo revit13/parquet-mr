@@ -20,7 +20,6 @@ package org.apache.parquet.io.api;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
@@ -149,29 +148,6 @@ public class TestBinary {
   }
 
   @Test
-  public void testEqualityMethods() throws Exception {
-    Binary bin1 = Binary.fromConstantByteArray("alice".getBytes(), 1, 3);
-    Binary bin2 = Binary.fromConstantByteBuffer(ByteBuffer.wrap("alice".getBytes(), 1, 3));
-    assertEquals(bin1, bin2);
-  }
-
-  @Test
-  public void testWriteAllTo() throws Exception {
-    byte[] orig = {10, 9 ,8, 7, 6, 5, 4, 3, 2, 1};
-    testWriteAllToHelper(Binary.fromConstantByteBuffer(ByteBuffer.wrap(orig)), orig);
-    ByteBuffer buf = ByteBuffer.allocateDirect(orig.length);
-    buf.put(orig);
-    buf.flip();
-    testWriteAllToHelper(Binary.fromConstantByteBuffer(buf), orig);
-  }
-
-  private void testWriteAllToHelper(Binary binary, byte[] orig) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream(orig.length);
-    binary.writeTo(out);
-    assertArrayEquals(orig, out.toByteArray());
-  }
-
-  @Test
   public void testFromStringBinary() throws Exception {
     testBinary(STRING_BF, false);
   }
@@ -247,25 +223,5 @@ public class TestBinary {
     }
 
     testSerializable(bf, reused);
-  }
-
-  @Test
-  public void testCompare() {
-    Binary b1 = Binary.fromCharSequence("aaaaaaaa");
-    Binary b2 = Binary.fromString("aaaaaaab");
-    Binary b3 = Binary.fromReusedByteArray("aaaaaaaaaaa".getBytes(), 1, 8);
-    Binary b4 = Binary.fromConstantByteBuffer(ByteBuffer.wrap("aaaaaaac".getBytes()));
-
-    assertTrue(b1.compareTo(b2) < 0);
-    assertTrue(b2.compareTo(b1) > 0);
-    assertTrue(b3.compareTo(b4) < 0);
-    assertTrue(b4.compareTo(b3) > 0);
-    assertTrue(b1.compareTo(b4) < 0);
-    assertTrue(b4.compareTo(b1) > 0);
-    assertTrue(b2.compareTo(b4) < 0);
-    assertTrue(b4.compareTo(b2) > 0);
-
-    assertTrue(b1.compareTo(b3) == 0);
-    assertTrue(b3.compareTo(b1) == 0);
   }
 }

@@ -20,6 +20,8 @@ package org.apache.parquet;
 
 /**
  * Utilities for working with ints
+ *
+ * @author Alex Levenson
  */
 public final class Ints {
   private Ints() { }

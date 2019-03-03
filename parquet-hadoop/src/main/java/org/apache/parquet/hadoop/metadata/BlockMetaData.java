@@ -25,6 +25,9 @@ import java.util.List;
 
 /**
  * Block metadata stored in the footer and passed in an InputSplit
+ *
+ * @author Julien Le Dem
+ *
  */
 public class BlockMetaData {
 
@@ -32,6 +35,7 @@ public class BlockMetaData {
   private long rowCount;
   private long totalByteSize;
   private String path;
+  private short ordinal;
 
   public BlockMetaData() {
   }
@@ -116,5 +120,14 @@ public class BlockMetaData {
       totalSize += col.getTotalSize();
     }
     return totalSize;
+  }
+  
+  public void setOrdinal(short ordinal) {
+    this.ordinal = ordinal;
+  }
+
+
+  public short getOrdinal() {
+    return ordinal;
   }
 }

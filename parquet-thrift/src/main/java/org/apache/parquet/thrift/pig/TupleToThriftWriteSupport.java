@@ -31,6 +31,9 @@ import com.twitter.elephantbird.pig.util.PigToThrift;
 
 /**
  * Stores Pig tuples as Thrift objects
+ *
+ * @author Julien Le Dem
+ *
  */
 public class TupleToThriftWriteSupport extends WriteSupport<Tuple> {
 

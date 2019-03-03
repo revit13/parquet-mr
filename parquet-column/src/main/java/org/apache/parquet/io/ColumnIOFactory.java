@@ -29,6 +29,9 @@ import org.apache.parquet.schema.TypeVisitor;
 
 /**
  * Factory constructing the ColumnIO structure from the schema
+ *
+ * @author Julien Le Dem
+ *
  */
 public class ColumnIOFactory {
 

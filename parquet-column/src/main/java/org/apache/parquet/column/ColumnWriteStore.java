@@ -21,6 +21,8 @@ package org.apache.parquet.column;
 /**
  * Container which can construct writers for multiple columns to be stored
  * together.
+ *
+ * @author Julien Le Dem
  */
 public interface ColumnWriteStore {
   /**
@@ -56,10 +58,4 @@ public interface ColumnWriteStore {
    * @return a formated string representing memory usage per column
    */
   abstract public String memUsageString();
-
-  /**
-   * Close the related output stream and release any resources
-   */
-  abstract public void close();
-
 }

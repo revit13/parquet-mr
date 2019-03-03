@@ -1,4 +1,4 @@
-/*
+/* 
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.column.ParquetProperties.WriterVersion;
+import org.apache.parquet.crypto.InternalFileEncryptor;
 import org.apache.parquet.hadoop.CodecFactory.BytesCompressor;
 import org.apache.parquet.hadoop.api.WriteSupport;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
@@ -39,6 +40,8 @@ import static org.apache.parquet.Preconditions.checkNotNull;
  *
  * @see ParquetOutputFormat
  *
+ * @author Julien Le Dem
+ *
  * @param <T> the type of the materialized records
  */
 public class ParquetRecordWriter<T> extends RecordWriter<Void, T> {
@@ -46,6 +49,7 @@ public class ParquetRecordWriter<T> extends RecordWriter<Void, T> {
   private final InternalParquetRecordWriter<T> internalWriter;
   private final MemoryManager memoryManager;
   private final CodecFactory codecFactory;
+  
 
   /**
    *
@@ -54,12 +58,10 @@ public class ParquetRecordWriter<T> extends RecordWriter<Void, T> {
    * @param schema the schema of the records
    * @param extraMetaData extra meta data to write in the footer of the file
    * @param blockSize the size of a block in the file (this will be approximate)
-   * @param pageSize the size of a page in the file (this will be approximate)
    * @param compressor the compressor used to compress the pages
    * @param dictionaryPageSize the threshold for dictionary size
    * @param enableDictionary to enable the dictionary
    * @param validating if schema validation should be turned on
-   * @param writerVersion writer compatibility version
    */
   @Deprecated
   public ParquetRecordWriter(
@@ -92,13 +94,10 @@ public class ParquetRecordWriter<T> extends RecordWriter<Void, T> {
    * @param schema the schema of the records
    * @param extraMetaData extra meta data to write in the footer of the file
    * @param blockSize the size of a block in the file (this will be approximate)
-   * @param pageSize the size of a page in the file (this will be approximate)
    * @param compressor the compressor used to compress the pages
    * @param dictionaryPageSize the threshold for dictionary size
    * @param enableDictionary to enable the dictionary
    * @param validating if schema validation should be turned on
-   * @param writerVersion writer compatibility version
-   * @param memoryManager memory manager for the write
    */
   @Deprecated
   public ParquetRecordWriter(
@@ -148,10 +147,11 @@ public class ParquetRecordWriter<T> extends RecordWriter<Void, T> {
       ParquetProperties props,
       MemoryManager memoryManager,
       Configuration conf) {
-    this.codecFactory = new CodecFactory(conf, props.getPageSizeThreshold());
+    this.codecFactory = new CodecFactory(conf);
     internalWriter = new InternalParquetRecordWriter<T>(w, writeSupport, schema,
-        extraMetaData, blockSize, codecFactory.getCompressor(codec), validating,
-        props);
+        extraMetaData, blockSize,
+        codecFactory.getCompressor(codec, props.getPageSizeThreshold()),
+        validating, props);
     this.memoryManager = checkNotNull(memoryManager, "memoryManager");
     memoryManager.addWriter(internalWriter, blockSize);
   }

@@ -45,7 +45,7 @@ public class SnappyDecompressor implements Decompressor {
    * @param off Start offset of the data
    * @param len Size of the buffer
    * @return The actual number of bytes of uncompressed data.
-   * @throws IOException if reading or decompression fails
+   * @throws IOException
    */
   @Override
   public synchronized int decompress(byte[] buffer, int off, int len) throws IOException {
@@ -147,5 +147,4 @@ public class SnappyDecompressor implements Decompressor {
   public void setDictionary(byte[] b, int off, int len) {
     // No-op		
   }
-
-} //class SnappyDecompressor
+}

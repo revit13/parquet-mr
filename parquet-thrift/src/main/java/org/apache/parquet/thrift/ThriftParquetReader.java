@@ -34,6 +34,7 @@ import static org.apache.parquet.Preconditions.checkNotNull;
 
 /**
  * To read a parquet file into thrift objects
+ * @author Julien Le Dem
  * @param <T> the thrift type
  */
 public class ThriftParquetReader<T extends TBase<?,?>> extends ParquetReader<T> {
@@ -41,7 +42,7 @@ public class ThriftParquetReader<T extends TBase<?,?>> extends ParquetReader<T> 
   /**
    * @param file the file to read
    * @param thriftClass the class used to read
-   * @throws IOException if there is an error while reading
+   * @throws IOException
    * @deprecated use {@link #build(Path)}
    */
   @Deprecated
@@ -53,7 +54,7 @@ public class ThriftParquetReader<T extends TBase<?,?>> extends ParquetReader<T> 
    * @param conf the configuration
    * @param file the file to read
    * @param thriftClass the class used to read
-   * @throws IOException if there is an error while reading
+   * @throws IOException
    * @deprecated use {@link #build(Path)}
    */
   @Deprecated
@@ -64,7 +65,7 @@ public class ThriftParquetReader<T extends TBase<?,?>> extends ParquetReader<T> 
   /**
    * will use the thrift class based on the file metadata if a thrift class information is present
    * @param file the file to read
-   * @throws IOException if there is an error while reading
+   * @throws IOException
    * @deprecated use {@link #build(Path)}
    */
   @Deprecated
@@ -76,7 +77,7 @@ public class ThriftParquetReader<T extends TBase<?,?>> extends ParquetReader<T> 
    * will use the thrift class based on the file metadata if a thrift class information is present
    * @param conf the configuration
    * @param file the file to read
-   * @throws IOException if there is an error while reading
+   * @throws IOException
    * @deprecated use {@link #build(Path)}
    */
   @Deprecated
@@ -115,9 +116,6 @@ public class ThriftParquetReader<T extends TBase<?,?>> extends ParquetReader<T> 
      * If this is called, the thrift class is used.
      * If not, will use the thrift class based on the file
      * metadata if a thrift class information is present.
-     *
-     * @param thriftClass a thrift class
-     * @return this for method chaining
      */
     public Builder<T> withThriftClass(Class<T> thriftClass) {
       this.thriftClass = checkNotNull(thriftClass, "thriftClass");

@@ -1,4 +1,4 @@
-/*
+/* 
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -47,7 +47,6 @@ import org.apache.parquet.column.page.DataPageV2;
 import org.apache.parquet.column.page.DictionaryPage;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.column.page.PageReader;
-import org.apache.parquet.column.statistics.Statistics;
 import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.apache.parquet.hadoop.metadata.ColumnChunkMetaData;
@@ -57,13 +56,11 @@ import org.apache.parquet.io.api.Converter;
 import org.apache.parquet.io.api.GroupConverter;
 import org.apache.parquet.io.api.PrimitiveConverter;
 import org.apache.parquet.schema.MessageType;
-import org.apache.parquet.schema.PrimitiveStringifier;
+import org.apache.parquet.tools.util.MetadataUtils;
 import org.apache.parquet.tools.util.PrettyPrintWriter;
 import org.apache.parquet.tools.util.PrettyPrintWriter.WhiteSpaceHandler;
 
 import com.google.common.base.Joiner;
-
-import static org.apache.parquet.format.converter.ParquetMetadataConverter.NO_FILTER;
 
 public class DumpCommand extends ArgsOnlyCommand {
     private static final Charset UTF8 = Charset.forName("UTF-8");
@@ -84,18 +81,13 @@ public class DumpCommand extends ArgsOnlyCommand {
                                  .withDescription("Do not dump column data")
                                  .create('d');
 
-        Option nocrop = OptionBuilder.withLongOpt("disable-crop")
-                                 .withDescription("Do not crop the output based on console width")
-                                 .create('n');
-
         Option cl = OptionBuilder.withLongOpt("column")
                                  .withDescription("Dump only the given column, can be specified more than once")
-                                 .hasArg()
+                                 .hasArgs()
                                  .create('c');
 
         OPTIONS.addOption(md);
         OPTIONS.addOption(dt);
-        OPTIONS.addOption(nocrop);
         OPTIONS.addOption(cl);
     }
 
@@ -113,12 +105,7 @@ public class DumpCommand extends ArgsOnlyCommand {
         return USAGE;
     }
 
-  @Override
-  public String getCommandDescription() {
-    return "Prints the content and metadata of a Parquet file";
-  }
-
-  @Override
+    @Override
     public void execute(CommandLine options) throws Exception {
         super.execute(options);
 
@@ -128,12 +115,20 @@ public class DumpCommand extends ArgsOnlyCommand {
         Configuration conf = new Configuration();
         Path inpath = new Path(input);
 
-        ParquetMetadata metaData = ParquetFileReader.readFooter(conf, inpath, NO_FILTER);
+        ParquetMetadata metaData = ParquetFileReader.readFooter(conf, inpath);
         MessageType schema = metaData.getFileMetaData().getSchema();
+
+        PrettyPrintWriter out = PrettyPrintWriter.stdoutPrettyPrinter()
+                                                 .withAutoColumn()
+                                                 .withAutoCrop()
+                                                 .withWhitespaceHandler(WhiteSpaceHandler.ELIMINATE_NEWLINES)
+                                                 .withColumnPadding(1)
+                                                 .withMaxBufferedLines(1000000)
+                                                 .withFlushOnTab()
+                                                 .build();
 
         boolean showmd = !options.hasOption('m');
         boolean showdt = !options.hasOption('d');
-        boolean cropoutput = !options.hasOption('n');
 
         Set<String> showColumns = null;
         if (options.hasOption('c')) {
@@ -141,7 +136,6 @@ public class DumpCommand extends ArgsOnlyCommand {
             showColumns = new HashSet<String>(Arrays.asList(cols));
         }
 
-        PrettyPrintWriter out = prettyPrintWriter(cropoutput);
         dump(out, metaData, schema, inpath, showmd, showdt, showColumns);
     }
 
@@ -268,12 +262,6 @@ public class DumpCommand extends ArgsOnlyCommand {
                 out.format(" DLE:%s", pageV1.getDlEncoding());
                 out.format(" RLE:%s", pageV1.getRlEncoding());
                 out.format(" VLE:%s", pageV1.getValueEncoding());
-                Statistics<?> statistics = pageV1.getStatistics();
-                if (statistics != null) {
-                  out.format(" ST:[%s]", statistics);
-                } else {
-                  out.format(" ST:[none]");
-                }
                 return null;
               }
 
@@ -282,12 +270,6 @@ public class DumpCommand extends ArgsOnlyCommand {
                 out.format(" DLE:RLE");
                 out.format(" RLE:RLE");
                 out.format(" VLE:%s", pageV2.getDataEncoding());
-                Statistics<?> statistics = pageV2.getStatistics();
-                if (statistics != null) {
-                  out.format(" ST:[%s]", statistics);
-                } else {
-                  out.format(" ST:[none]");
-                }
                 return null;
               }
             });
@@ -309,29 +291,16 @@ public class DumpCommand extends ArgsOnlyCommand {
 
             out.format("value %d: R:%d D:%d V:", offset+i, rlvl, dlvl);
             if (dlvl == dmax) {
-              PrimitiveStringifier stringifier =  column.getPrimitiveType().stringifier();
-              switch (column.getType()) {
-                case FIXED_LEN_BYTE_ARRAY:
-                case INT96:
-                case BINARY:
-                  out.print(stringifier.stringify(creader.getBinary()));
-                  break;
-                case BOOLEAN:
-                  out.print(stringifier.stringify(creader.getBoolean()));
-                  break;
-                case DOUBLE:
-                  out.print(stringifier.stringify(creader.getDouble()));
-                  break;
-                case FLOAT:
-                  out.print(stringifier.stringify(creader.getFloat()));
-                  break;
-                case INT32:
-                  out.print(stringifier.stringify(creader.getInteger()));
-                  break;
-                case INT64:
-                  out.print(stringifier.stringify(creader.getLong()));
-                  break;
-              }
+                switch (column.getType()) {
+                case BINARY:  out.format("%s", binaryToString(creader.getBinary())); break;
+                case BOOLEAN: out.format("%s", creader.getBoolean()); break;
+                case DOUBLE:  out.format("%s", creader.getDouble()); break;
+                case FLOAT:   out.format("%s", creader.getFloat()); break;
+                case INT32:   out.format("%s", creader.getInteger()); break;
+                case INT64:   out.format("%s", creader.getLong()); break;
+                case INT96:   out.format("%s", binaryToBigInteger(creader.getBinary())); break;
+                case FIXED_LEN_BYTE_ARRAY: out.format("%s", binaryToString(creader.getBinary())); break;
+                }
             } else {
                 out.format("<null>");
             }
@@ -348,7 +317,7 @@ public class DumpCommand extends ArgsOnlyCommand {
         try {
             CharBuffer buffer = UTF8_DECODER.decode(value.toByteBuffer());
             return buffer.toString();
-        } catch (Exception ex) {
+        } catch (Throwable th) {
         }
 
         return "<bytes...>";
@@ -359,21 +328,6 @@ public class DumpCommand extends ArgsOnlyCommand {
         if (data == null) return null;
 
         return new BigInteger(data);
-    }
-
-    private static PrettyPrintWriter prettyPrintWriter(boolean cropOutput) {
-        PrettyPrintWriter.Builder builder = PrettyPrintWriter.stdoutPrettyPrinter()
-                .withAutoColumn()
-                .withWhitespaceHandler(WhiteSpaceHandler.ELIMINATE_NEWLINES)
-                .withColumnPadding(1)
-                .withMaxBufferedLines(1000000)
-                .withFlushOnTab();
-
-        if (cropOutput) {
-            builder.withAutoCrop();
-        }
-
-        return builder.build();
     }
 
     private static final class DumpGroupConverter extends GroupConverter {

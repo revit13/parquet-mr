@@ -18,9 +18,9 @@
  */
 package org.apache.parquet.column.values.plain;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.LittleEndianDataInputStream;
 import org.apache.parquet.column.values.ValuesReader;
 import org.apache.parquet.io.ParquetDecodingException;
@@ -29,38 +29,33 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Plain encoding for float, double, int, long
+ *
+ * @author Julien Le Dem
+ *
  */
 abstract public class PlainValuesReader extends ValuesReader {
   private static final Logger LOG = LoggerFactory.getLogger(PlainValuesReader.class);
 
   protected LittleEndianDataInputStream in;
 
+  /**
+   * {@inheritDoc}
+   * @see org.apache.parquet.column.values.ValuesReader#initFromPage(byte[], int)
+   */
   @Override
-  public void initFromPage(int valueCount, ByteBufferInputStream stream) throws IOException {
-    LOG.debug("init from page at offset {} for length {}", stream.position(), stream.available());
-    this.in = new LittleEndianDataInputStream(stream.remainingStream());
-  }
-
-  @Override
-  public void skip() {
-    skip(1);
-  }
-
-  void skipBytesFully(int n) throws IOException {
-    int skipped = 0;
-    while (skipped < n) {
-      skipped += in.skipBytes(n - skipped);
-    }
+  public void initFromPage(int valueCount, byte[] in, int offset) throws IOException {
+    LOG.debug("init from page at offset {} for length {}", offset , (in.length - offset));
+    this.in = new LittleEndianDataInputStream(new ByteArrayInputStream(in, offset, in.length - offset));
   }
 
   public static class DoublePlainValuesReader extends PlainValuesReader {
 
     @Override
-    public void skip(int n) {
+    public void skip() {
       try {
-        skipBytesFully(n * 8);
+        in.skipBytes(8);
       } catch (IOException e) {
-        throw new ParquetDecodingException("could not skip " + n + " double values", e);
+        throw new ParquetDecodingException("could not skip double", e);
       }
     }
 
@@ -77,11 +72,11 @@ abstract public class PlainValuesReader extends ValuesReader {
   public static class FloatPlainValuesReader extends PlainValuesReader {
 
     @Override
-    public void skip(int n) {
+    public void skip() {
       try {
-        skipBytesFully(n * 4);
+        in.skipBytes(4);
       } catch (IOException e) {
-        throw new ParquetDecodingException("could not skip " + n + " floats", e);
+        throw new ParquetDecodingException("could not skip float", e);
       }
     }
 
@@ -98,11 +93,11 @@ abstract public class PlainValuesReader extends ValuesReader {
   public static class IntegerPlainValuesReader extends PlainValuesReader {
 
     @Override
-    public void skip(int n) {
+    public void skip() {
       try {
-        in.skipBytes(n * 4);
+        in.skipBytes(4);
       } catch (IOException e) {
-        throw new ParquetDecodingException("could not skip " + n + " ints", e);
+        throw new ParquetDecodingException("could not skip int", e);
       }
     }
 
@@ -119,11 +114,11 @@ abstract public class PlainValuesReader extends ValuesReader {
   public static class LongPlainValuesReader extends PlainValuesReader {
 
     @Override
-    public void skip(int n) {
+    public void skip() {
       try {
-        in.skipBytes(n * 8);
+        in.skipBytes(8);
       } catch (IOException e) {
-        throw new ParquetDecodingException("could not skip " + n + " longs", e);
+        throw new ParquetDecodingException("could not skip long", e);
       }
     }
 

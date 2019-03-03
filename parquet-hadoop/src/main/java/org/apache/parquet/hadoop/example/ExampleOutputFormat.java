@@ -18,6 +18,7 @@
  */
 package org.apache.parquet.hadoop.example;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 
 import org.apache.parquet.example.data.Group;
@@ -31,12 +32,15 @@ import org.apache.parquet.schema.MessageType;
  * must be provided the schema up front
  * @see ExampleOutputFormat#setSchema(Job, MessageType)
  * @see GroupWriteSupport#PARQUET_EXAMPLE_SCHEMA
+ *
+ * @author Julien Le Dem
+ *
  */
 public class ExampleOutputFormat extends ParquetOutputFormat<Group> {
 
   /**
    * set the schema being written to the job conf
-   * @param job a job
+   * @param job
    * @param schema the schema of the data
    */
   public static void setSchema(Job job, MessageType schema) {
@@ -45,7 +49,7 @@ public class ExampleOutputFormat extends ParquetOutputFormat<Group> {
 
   /**
    * retrieve the schema from the conf
-   * @param job a job
+   * @param job
    * @return the schema
    */
   public static MessageType getSchema(Job job) {

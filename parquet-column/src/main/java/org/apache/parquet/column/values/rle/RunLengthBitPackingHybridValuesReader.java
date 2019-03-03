@@ -18,9 +18,9 @@
  */
 package org.apache.parquet.column.values.rle;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.BytesUtils;
 import org.apache.parquet.column.values.ValuesReader;
 import org.apache.parquet.io.ParquetDecodingException;
@@ -28,23 +28,32 @@ import org.apache.parquet.io.ParquetDecodingException;
 /**
  * This ValuesReader does all the reading in {@link #initFromPage}
  * and stores the values in an in memory buffer, which is less than ideal.
+ *
+ * @author Alex Levenson
  */
 public class RunLengthBitPackingHybridValuesReader extends ValuesReader {
   private final int bitWidth;
   private RunLengthBitPackingHybridDecoder decoder;
+  private int nextOffset;
 
   public RunLengthBitPackingHybridValuesReader(int bitWidth) {
     this.bitWidth = bitWidth;
   }
 
   @Override
-  public void initFromPage(int valueCountL, ByteBufferInputStream stream) throws IOException {
-    int length = BytesUtils.readIntLittleEndian(stream);
-    this.decoder = new RunLengthBitPackingHybridDecoder(
-        bitWidth, stream.sliceStream(length));
+  public void initFromPage(int valueCountL, byte[] page, int offset) throws IOException {
+    ByteArrayInputStream in = new ByteArrayInputStream(page, offset, page.length - offset);
+    int length = BytesUtils.readIntLittleEndian(in);
+
+    decoder = new RunLengthBitPackingHybridDecoder(bitWidth, in);
 
     // 4 is for the length which is stored as 4 bytes little endian
-    updateNextOffset(length + 4);
+    this.nextOffset = offset + length + 4;
+  }
+  
+  @Override
+  public int getNextOffset() {
+    return this.nextOffset;
   }
 
   @Override

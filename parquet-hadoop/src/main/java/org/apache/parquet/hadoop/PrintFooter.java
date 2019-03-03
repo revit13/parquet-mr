@@ -55,6 +55,8 @@ import org.apache.parquet.schema.MessageType;
 
 /**
  * Utility to print footer information
+ * @author Julien Le Dem
+ *
  */
 public class PrintFooter {
 

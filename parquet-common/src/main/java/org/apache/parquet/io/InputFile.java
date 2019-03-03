@@ -28,16 +28,15 @@ import java.io.IOException;
 public interface InputFile {
 
   /**
-   * @return the total length of the file, in bytes.
+   * Returns the total length of the file, in bytes.
    * @throws IOException if the length cannot be determined
    */
   long getLength() throws IOException;
 
   /**
-   * Open a new {@link SeekableInputStream} for the underlying data file.
-   *
-   * @return a new {@link SeekableInputStream} to read the file
-   * @throws IOException if the stream cannot be opened
+   * Opens a new {@link SeekableInputStream} for the underlying
+   * data file.
+   * @throws IOException if the stream cannot be opened.
    */
   SeekableInputStream newStream() throws IOException;
 

@@ -24,6 +24,7 @@ import org.apache.parquet.hadoop.util.counters.ICounter;
 
 /**
  * Adapt a mapreduce counter to ICounter
+ * @author Tianshuo Deng
  */
 public class MapReduceCounterAdapter implements ICounter {
   private Counter adaptee;

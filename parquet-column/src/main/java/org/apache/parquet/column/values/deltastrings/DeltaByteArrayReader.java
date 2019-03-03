@@ -19,10 +19,7 @@
 package org.apache.parquet.column.values.deltastrings;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
-import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.column.values.RequiresPreviousReader;
 import org.apache.parquet.column.values.ValuesReader;
 import org.apache.parquet.column.values.delta.DeltaBinaryPackingValuesReader;
@@ -31,6 +28,9 @@ import org.apache.parquet.io.api.Binary;
 
 /**
  * Reads binary data written by {@link DeltaByteArrayWriter}
+ * 
+ * @author Aniket Mokashi
+ *
  */
 public class DeltaByteArrayReader extends ValuesReader implements RequiresPreviousReader {
   private ValuesReader prefixLengthReader;
@@ -45,10 +45,11 @@ public class DeltaByteArrayReader extends ValuesReader implements RequiresPrevio
   }
 
   @Override
-  public void initFromPage(int valueCount, ByteBufferInputStream stream)
+  public void initFromPage(int valueCount, byte[] page, int offset)
       throws IOException {
-    prefixLengthReader.initFromPage(valueCount, stream);
-    suffixReader.initFromPage(valueCount, stream);
+    prefixLengthReader.initFromPage(valueCount, page, offset);
+    int next = prefixLengthReader.getNextOffset();
+    suffixReader.initFromPage(valueCount, page, next);	
   }
 
   @Override

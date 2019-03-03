@@ -1,4 +1,4 @@
-/*
+/* 
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -23,8 +23,8 @@ import java.util.List;
 
 import org.apache.parquet.ShouldNeverHappenException;
 import org.apache.parquet.schema.GroupType;
-import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
 import org.apache.parquet.schema.Type;
@@ -55,8 +55,8 @@ import org.apache.parquet.thrift.struct.ThriftType.StructType.StructOrUnionType;
 import static org.apache.parquet.Preconditions.checkNotNull;
 import static org.apache.parquet.schema.ConversionPatterns.listType;
 import static org.apache.parquet.schema.ConversionPatterns.mapType;
-import static org.apache.parquet.schema.LogicalTypeAnnotation.enumType;
-import static org.apache.parquet.schema.LogicalTypeAnnotation.stringType;
+import static org.apache.parquet.schema.OriginalType.ENUM;
+import static org.apache.parquet.schema.OriginalType.UTF8;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.BINARY;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.BOOLEAN;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.DOUBLE;
@@ -70,27 +70,22 @@ import static org.apache.parquet.schema.Types.primitive;
 /**
  * Visitor Class for converting a thrift definition to parquet message type.
  * Projection can be done by providing a {@link FieldProjectionFilter}
+ *
+ * @author Tianshuo Deng
  */
 class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedField, ThriftSchemaConvertVisitor.State> {
   private final FieldProjectionFilter fieldProjectionFilter;
   private final boolean doProjection;
-  private final boolean keepOneOfEachUnion;
 
-  private ThriftSchemaConvertVisitor(FieldProjectionFilter fieldProjectionFilter, boolean doProjection, boolean keepOneOfEachUnion) {
+  private ThriftSchemaConvertVisitor(FieldProjectionFilter fieldProjectionFilter, boolean doProjection) {
     this.fieldProjectionFilter = checkNotNull(fieldProjectionFilter, "fieldProjectionFilter");
     this.doProjection = doProjection;
-    this.keepOneOfEachUnion = keepOneOfEachUnion;
   }
 
-  @Deprecated
   public static MessageType convert(StructType struct, FieldProjectionFilter filter) {
-    return convert(struct, filter, true);
-  }
-
-  public static MessageType convert(StructType struct, FieldProjectionFilter filter, boolean keepOneOfEachUnion) {
     State state = new State(new FieldsPath(), REPEATED, "ParquetSchema");
 
-    ConvertedField converted = struct.accept(new ThriftSchemaConvertVisitor(filter, true, keepOneOfEachUnion), state);
+    ConvertedField converted = struct.accept(new ThriftSchemaConvertVisitor(filter, true), state);
 
     if (!converted.isKeep()) {
       throw new ThriftProjectionException("No columns have been selected");
@@ -139,7 +134,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
     if (doProjection) {
       ConvertedField fullConvKey = keyField
           .getType()
-          .accept(new ThriftSchemaConvertVisitor(FieldProjectionFilter.ALL_COLUMNS, false, keepOneOfEachUnion), keyState);
+          .accept(new ThriftSchemaConvertVisitor(FieldProjectionFilter.ALL_COLUMNS, false), keyState);
 
       if (!fullConvKey.asKeep().getType().equals(convertedKey.asKeep().getType())) {
         throw new ThriftProjectionException("Cannot select only a subset of the fields in a map key, " +
@@ -165,7 +160,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
     // keep only the key, not the value
 
     ConvertedField sentinelValue =
-        valueField.getType().accept(new ThriftSchemaConvertVisitor(new KeepOnlyFirstPrimitiveFilter(), true, keepOneOfEachUnion), valueState);
+        valueField.getType().accept(new ThriftSchemaConvertVisitor(new KeepOnlyFirstPrimitiveFilter(), true), valueState);
 
     Type mapField = mapType(
         state.repetition,
@@ -186,7 +181,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
       if (isSet && doProjection) {
         ConvertedField fullConv = listLike
             .getType()
-            .accept(new ThriftSchemaConvertVisitor(FieldProjectionFilter.ALL_COLUMNS, false, keepOneOfEachUnion), childState);
+            .accept(new ThriftSchemaConvertVisitor(FieldProjectionFilter.ALL_COLUMNS, false), childState);
         if (!converted.asKeep().getType().equals(fullConv.asKeep().getType())) {
           throw new ThriftProjectionException("Cannot select only a subset of the fields in a set, " +
               "for path " + state.path);
@@ -215,7 +210,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
     // special care is taken when converting unions,
     // because we are actually both converting + projecting in
     // one pass, and unions need special handling when projecting.
-    final boolean needsToKeepOneOfEachUnion = keepOneOfEachUnion && isUnion(structType.getStructOrUnionType());
+    final boolean isUnion = isUnion(structType.getStructOrUnionType());
 
     boolean hasSentinelUnionColumns = false;
     boolean hasNonSentinelUnionColumns = false;
@@ -228,7 +223,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
 
       ConvertedField converted = child.getType().accept(this, childState);
 
-      if (!converted.isKeep() && needsToKeepOneOfEachUnion) {
+      if (isUnion && !converted.isKeep()) {
         // user is not keeping this "kind" of union, but we still need
         // to keep at least one of the primitives of this union around.
         // in order to know what "kind" of union each record is.
@@ -237,7 +232,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
         // re-do the recursion, with a new projection filter that keeps only
         // the first primitive it encounters
         ConvertedField firstPrimitive = child.getType().accept(
-            new ThriftSchemaConvertVisitor(new KeepOnlyFirstPrimitiveFilter(), true, keepOneOfEachUnion), childState);
+            new ThriftSchemaConvertVisitor(new KeepOnlyFirstPrimitiveFilter(), true), childState);
 
         convertedChildren.add(firstPrimitive.asKeep().getType().withId(child.getFieldId()));
         hasSentinelUnionColumns = true;
@@ -278,7 +273,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
     return visitPrimitiveType(type, null, state);
   }
 
-  private ConvertedField visitPrimitiveType(PrimitiveTypeName type, LogicalTypeAnnotation orig, State state) {
+  private ConvertedField visitPrimitiveType(PrimitiveTypeName type, OriginalType orig, State state) {
     PrimitiveBuilder<PrimitiveType> b = primitive(type, state.repetition);
 
     if (orig != null) {
@@ -294,7 +289,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
 
   @Override
   public ConvertedField visit(EnumType enumType, State state) {
-    return visitPrimitiveType(BINARY, enumType(), state);
+    return visitPrimitiveType(BINARY, ENUM, state);
   }
 
   @Override
@@ -329,7 +324,7 @@ class ThriftSchemaConvertVisitor implements ThriftType.StateVisitor<ConvertedFie
 
   @Override
   public ConvertedField visit(StringType stringType, State state) {
-    return stringType.isBinary() ? visitPrimitiveType(BINARY, state) : visitPrimitiveType(BINARY, stringType(), state);
+    return visitPrimitiveType(BINARY, UTF8, state);
   }
 
   private static boolean isUnion(StructOrUnionType s) {

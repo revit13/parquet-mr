@@ -22,6 +22,9 @@ import org.apache.parquet.ParquetRuntimeException;
 
 /**
  * thrown if the schema can not be projected/filtered
+ *
+ * @author Tianshuo Deng
+ *
  */
 
 public class ThriftProjectionException extends ParquetRuntimeException {

@@ -19,24 +19,21 @@
 package org.apache.parquet.column.values.rle;
 
 import java.io.IOException;
-import java.util.Objects;
 
-import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.Ints;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.column.Encoding;
 import org.apache.parquet.column.values.ValuesWriter;
 import org.apache.parquet.io.ParquetEncodingException;
 
+/**
+ * @author Alex Levenson
+ */
 public class RunLengthBitPackingHybridValuesWriter extends ValuesWriter {
-  protected final RunLengthBitPackingHybridEncoder encoder;
+  private final RunLengthBitPackingHybridEncoder encoder;
 
-  public RunLengthBitPackingHybridValuesWriter(int bitWidth, int initialCapacity, int pageSize, ByteBufferAllocator allocator) {
-    this(new RunLengthBitPackingHybridEncoder(bitWidth, initialCapacity, pageSize, allocator));
-  }
-
-  protected RunLengthBitPackingHybridValuesWriter(RunLengthBitPackingHybridEncoder encoder) {
-    this.encoder = Objects.requireNonNull(encoder);
+  public RunLengthBitPackingHybridValuesWriter(int bitWidth, int initialCapacity, int pageSize) {
+    this.encoder = new RunLengthBitPackingHybridEncoder(bitWidth, initialCapacity, pageSize);
   }
 
   @Override
@@ -82,11 +79,6 @@ public class RunLengthBitPackingHybridValuesWriter extends ValuesWriter {
   @Override
   public void reset() {
     encoder.reset();
-  }
-
-  @Override
-  public void close() {
-    encoder.close();
   }
 
   @Override

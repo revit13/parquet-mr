@@ -24,6 +24,10 @@ import java.util.List;
 /**
  * An append-only integer list
  * avoids autoboxing and buffer resizing
+ *
+ *
+ * @author Julien Le Dem
+ *
  */
 public class IntList {
 
@@ -45,6 +49,9 @@ public class IntList {
   /**
    * to iterate on the content of the list
    * not an actual iterator to avoid autoboxing
+   *
+   * @author Julien Le Dem
+   *
    */
   public static class IntIterator {
 

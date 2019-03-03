@@ -1,4 +1,4 @@
-/*
+/* 
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -18,21 +18,27 @@
  */
 package org.apache.parquet.tools.read;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Optional;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 
 import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.io.api.Converter;
 import org.apache.parquet.io.api.GroupConverter;
 import org.apache.parquet.io.api.PrimitiveConverter;
 import org.apache.parquet.schema.GroupType;
-import org.apache.parquet.schema.LogicalTypeAnnotation;
+import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.Type;
 
-import static java.util.Optional.of;
-
+/**
+ * 
+ * 
+ * @author 
+ */
 public class SimpleRecordConverter extends GroupConverter {
+  private static final Charset UTF8 = Charset.forName("UTF-8");
+  private static final CharsetDecoder UTF8_DECODER = UTF8.newDecoder();
+
   private final Converter converters[];
   private final String name;
   private final SimpleRecordConverter parent;
@@ -54,38 +60,28 @@ public class SimpleRecordConverter extends GroupConverter {
   }
 
   private Converter createConverter(Type field) {
-    LogicalTypeAnnotation ltype = field.getLogicalTypeAnnotation();
+    OriginalType otype = field.getOriginalType();
 
     if (field.isPrimitive()) {
-      if (ltype != null) {
-        return ltype.accept(new LogicalTypeAnnotation.LogicalTypeAnnotationVisitor<Converter>() {
-          @Override
-          public Optional<Converter> visit(LogicalTypeAnnotation.StringLogicalTypeAnnotation stringLogicalType) {
-            return of(new StringConverter(field.getName()));
-          }
-
-          @Override
-          public Optional<Converter> visit(LogicalTypeAnnotation.DecimalLogicalTypeAnnotation decimalLogicalType) {
-            int scale = decimalLogicalType.getScale();
-            return of(new DecimalConverter(field.getName(), scale));
-          }
-        }).orElse(new SimplePrimitiveConverter(field.getName()));
+      if (otype != null) {
+        switch (otype) {
+          case MAP: break;
+          case LIST: break;
+          case UTF8: return new StringConverter(field.getName());
+          case MAP_KEY_VALUE: break;
+          case ENUM: break;
+        }
       }
+
+      return new SimplePrimitiveConverter(field.getName());
     }
 
     GroupType groupType = field.asGroupType();
-    if (ltype != null) {
-      return ltype.accept(new LogicalTypeAnnotation.LogicalTypeAnnotationVisitor<Converter>() {
-        @Override
-        public Optional<Converter> visit(LogicalTypeAnnotation.MapLogicalTypeAnnotation mapLogicalType) {
-          return of(new SimpleMapRecordConverter(groupType, field.getName(), SimpleRecordConverter.this));
-        }
-
-        @Override
-        public Optional<Converter> visit(LogicalTypeAnnotation.ListLogicalTypeAnnotation listLogicalType) {
-          return of(new SimpleListRecordConverter(groupType, field.getName(), SimpleRecordConverter.this));
-        }
-      }).orElse(new SimpleRecordConverter(groupType, field.getName(), this));
+    if (otype != null) {
+      switch (otype) {
+        case MAP: return new SimpleMapRecordConverter(groupType, field.getName(), this);
+        case LIST: return new SimpleListRecordConverter(groupType, field.getName(), this);
+      }
     }
     return new SimpleRecordConverter(groupType, field.getName(), this);
   }
@@ -157,30 +153,6 @@ public class SimpleRecordConverter extends GroupConverter {
     @Override
     public void addBinary(Binary value) {
       record.add(name, value.toStringUsingUTF8());
-    }
-  }
-
-  private class DecimalConverter extends SimplePrimitiveConverter {
-    private final int scale;
-
-    public DecimalConverter(String name, int scale) {
-      super(name);
-      this.scale = scale;
-    }
-
-    @Override
-    public void addBinary(Binary value) {
-      record.add(name, new BigDecimal(new BigInteger(value.getBytes()), scale));
-    }
-
-    @Override
-    public void addInt(int value) {
-      record.add(name, BigDecimal.valueOf(value).movePointLeft(scale));
-    }
-
-    @Override
-    public void addLong(long value) {
-      record.add(name, BigDecimal.valueOf(value).movePointLeft(scale));
     }
   }
 }

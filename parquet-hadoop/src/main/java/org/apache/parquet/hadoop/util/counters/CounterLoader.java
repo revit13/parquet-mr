@@ -21,6 +21,7 @@ package org.apache.parquet.hadoop.util.counters;
 /**
  * Factory interface for CounterLoaders, will load the counter according to groupName, counterName,
  * and if in the configuration, flag with name counterFlag is false, the counter will not be loaded
+ * @author Tianshuo Deng
  */
 public interface CounterLoader {
   public ICounter getCounterByNameAndFlag(String groupName, String counterName, String counterFlag);

@@ -20,11 +20,9 @@ package org.apache.parquet.column.values.deltalengthbytearray.benchmark;
 
 import java.io.IOException;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.apache.parquet.bytes.DirectByteBufferAllocator;
 import org.apache.parquet.column.values.Utils;
 import org.apache.parquet.column.values.deltalengthbytearray.DeltaLengthByteArrayValuesReader;
 import org.apache.parquet.column.values.deltalengthbytearray.DeltaLengthByteArrayValuesWriter;
@@ -49,25 +47,25 @@ public class BenchmarkDeltaLengthByteArray {
   @BenchmarkOptions(benchmarkRounds = 20, warmupRounds = 4)
   @Test
   public void benchmarkRandomStringsWithPlainValuesWriter() throws IOException {
-    PlainValuesWriter writer = new PlainValuesWriter(64 * 1024, 64 * 1024, new DirectByteBufferAllocator());
+    PlainValuesWriter writer = new PlainValuesWriter(64 * 1024, 64 * 1024);
     BinaryPlainValuesReader reader = new BinaryPlainValuesReader();
 
     Utils.writeData(writer, values);
-    ByteBufferInputStream data = writer.getBytes().toInputStream();
+    byte [] data = writer.getBytes().toByteArray();
     Binary[] bin = Utils.readData(reader, data, values.length);
-    System.out.println("size " + data.position());
+    System.out.println("size " + data.length);
   }
 
   @BenchmarkOptions(benchmarkRounds = 20, warmupRounds = 4)
   @Test
   public void benchmarkRandomStringsWithDeltaLengthByteArrayValuesWriter() throws IOException {
-    DeltaLengthByteArrayValuesWriter writer = new DeltaLengthByteArrayValuesWriter(64 * 1024, 64 * 1024, new DirectByteBufferAllocator());
+    DeltaLengthByteArrayValuesWriter writer = new DeltaLengthByteArrayValuesWriter(64 * 1024, 64 * 1024);
     DeltaLengthByteArrayValuesReader reader = new DeltaLengthByteArrayValuesReader();
 
     Utils.writeData(writer, values);
-    ByteBufferInputStream data = writer.getBytes().toInputStream();
+    byte [] data = writer.getBytes().toByteArray();
     Binary[] bin = Utils.readData(reader, data, values.length);
-    System.out.println("size " + data.position());
+    System.out.println("size " + data.length);
   }
 
 }

@@ -25,6 +25,9 @@ import org.apache.parquet.hadoop.ParquetInputFormat;
  * Example input format to read Parquet files
  *
  * This Input format uses a rather inefficient data model but works independently of higher level abstractions.
+ *
+ * @author Julien Le Dem
+ *
  */
 public class ExampleInputFormat extends ParquetInputFormat<Group> {
 

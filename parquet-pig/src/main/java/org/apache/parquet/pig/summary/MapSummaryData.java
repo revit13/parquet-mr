@@ -25,6 +25,9 @@ import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 
 /**
  * Summary data for a Map
+ *
+ * @author Julien Le Dem
+ *
  */
 public class MapSummaryData extends SummaryData {
 
@@ -33,6 +36,10 @@ public class MapSummaryData extends SummaryData {
   private FieldSummaryData key;
   private FieldSummaryData value;
 
+  /**
+   * add a map to the summary
+   * @param m the map
+   */
   public void add(Schema schema, Map<?, ?> m) {
     super.add(m);
     size.add(m.size());

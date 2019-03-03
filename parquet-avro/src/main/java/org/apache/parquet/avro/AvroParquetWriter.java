@@ -28,7 +28,6 @@ import org.apache.parquet.column.ParquetProperties.WriterVersion;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.api.WriteSupport;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-import org.apache.parquet.io.OutputFile;
 
 /**
  * Write Avro records to a Parquet file.
@@ -39,18 +38,14 @@ public class AvroParquetWriter<T> extends ParquetWriter<T> {
     return new Builder<T>(file);
   }
 
-  public static <T> Builder<T> builder(OutputFile file) {
-    return new Builder<T>(file);
-  }
-
   /** Create a new {@link AvroParquetWriter}.
    *
-   * @param file a file path
-   * @param avroSchema a schema for the write
-   * @param compressionCodecName compression codec
-   * @param blockSize target block size
-   * @param pageSize target page size
-   * @throws IOException if there is an error while writing
+   * @param file
+   * @param avroSchema
+   * @param compressionCodecName
+   * @param blockSize
+   * @param pageSize
+   * @throws IOException
    */
   @Deprecated
   public AvroParquetWriter(Path file, Schema avroSchema,
@@ -68,7 +63,7 @@ public class AvroParquetWriter<T> extends ParquetWriter<T> {
    * @param blockSize the block size threshold.
    * @param pageSize See parquet write up. Blocks are subdivided into pages for alignment and other purposes.
    * @param enableDictionary Whether to use a dictionary to compress columns.
-   * @throws IOException if there is an error while writing
+   * @throws IOException
    */
   @Deprecated
   public AvroParquetWriter(Path file, Schema avroSchema,
@@ -84,7 +79,7 @@ public class AvroParquetWriter<T> extends ParquetWriter<T> {
    *
    * @param file The file name to write to.
    * @param avroSchema The schema to write with.
-   * @throws IOException if there is an error while writing
+   * @throws IOException
    */
   @Deprecated
   public AvroParquetWriter(Path file, Schema avroSchema) throws IOException {
@@ -101,7 +96,7 @@ public class AvroParquetWriter<T> extends ParquetWriter<T> {
    * @param pageSize See parquet write up. Blocks are subdivided into pages for alignment and other purposes.
    * @param enableDictionary Whether to use a dictionary to compress columns.
    * @param conf The Configuration to use.
-   * @throws IOException if there is an error while writing
+   * @throws IOException
    */
   @Deprecated
   public AvroParquetWriter(Path file, Schema avroSchema,
@@ -155,10 +150,6 @@ public class AvroParquetWriter<T> extends ParquetWriter<T> {
     private GenericData model = SpecificData.get();
 
     private Builder(Path file) {
-      super(file);
-    }
-
-    private Builder(OutputFile file) {
       super(file);
     }
 

@@ -32,6 +32,9 @@ import org.apache.parquet.thrift.FieldIgnoredHandler;
 
 /**
  * To create a Parquet file from the Thrift binary of records
+ *
+ * @author Julien Le Dem
+ *
  */
 public class ThriftToParquetFileWriter implements Closeable {
 
@@ -81,7 +84,6 @@ public class ThriftToParquetFileWriter implements Closeable {
    * @param protocolFactory to create protocols to read the incoming bytes
    * @param thriftClass to produce the schema
    * @param buffered buffer each record individually
-   * @param errorHandler an error handler
    * @throws IOException if there was a problem writing
    * @throws InterruptedException from the underlying Hadoop API
    */
@@ -98,9 +100,9 @@ public class ThriftToParquetFileWriter implements Closeable {
 
   /**
    * write one record to the columnar store
-   * @param bytes a bytes writable
-   * @throws IOException if there is an error while writing
-   * @throws InterruptedException if writing is interrupted
+   * @param bytes
+   * @throws IOException
+   * @throws InterruptedException
    */
   public void write(BytesWritable bytes) throws IOException, InterruptedException {
     recordWriter.write(null, bytes);

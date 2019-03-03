@@ -18,14 +18,15 @@
  */
 package org.apache.parquet.column.values.rle;
 
-import java.nio.ByteBuffer;
+import java.io.ByteArrayInputStream;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.junit.Test;
-import org.apache.parquet.bytes.DirectByteBufferAllocator;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * @author Alex Levenson
+ */
 public class RunLengthBitPackingHybridIntegrationTest {
 
   @Test
@@ -38,7 +39,7 @@ public class RunLengthBitPackingHybridIntegrationTest {
   private void doIntegrationTest(int bitWidth) throws Exception {
     long modValue = 1L << bitWidth;
 
-    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(bitWidth, 1000, 64000, new DirectByteBufferAllocator());
+    RunLengthBitPackingHybridEncoder encoder = new RunLengthBitPackingHybridEncoder(bitWidth, 1000, 64000);
     int numValues = 0;
 
     for (int i = 0; i < 100; i++) {
@@ -68,8 +69,8 @@ public class RunLengthBitPackingHybridIntegrationTest {
     }
     numValues += 1000;
 
-    ByteBuffer encodedBytes = encoder.toBytes().toByteBuffer();
-    ByteBufferInputStream in = ByteBufferInputStream.wrap(encodedBytes);
+    byte[] encodedBytes = encoder.toBytes().toByteArray();
+    ByteArrayInputStream in = new ByteArrayInputStream(encodedBytes);
 
     RunLengthBitPackingHybridDecoder decoder = new RunLengthBitPackingHybridDecoder(bitWidth, in);
 

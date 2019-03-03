@@ -28,7 +28,10 @@ import org.apache.parquet.hadoop.util.ContextUtil;
 import java.io.IOException;
 
 /**
+ *
  * Adapter for supporting ParquetOutputCommitter in mapred API
+ *
+ * @author Tianshuo Deng
  */
 public class MapredParquetOutputCommitter extends FileOutputCommitter {
 

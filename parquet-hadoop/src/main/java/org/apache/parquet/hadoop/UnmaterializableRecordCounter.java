@@ -20,12 +20,10 @@ package org.apache.parquet.hadoop;
 
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.parquet.ParquetReadOptions;
 import org.apache.parquet.io.ParquetDecodingException;
 import org.apache.parquet.io.api.RecordMaterializer.RecordMaterializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Map;
 
 // Essentially taken from:
 // https://github.com/twitter/elephant-bird/blob/master/core/src/main/java/com/twitter/elephantbird/mapreduce/input/LzoRecordReader.java#L124
@@ -62,10 +60,6 @@ public class UnmaterializableRecordCounter {
      );
   }
 
-  public UnmaterializableRecordCounter(ParquetReadOptions options, long totalNumRecords) {
-    this(getFloat(options, BAD_RECORD_THRESHOLD_CONF_KEY, DEFAULT_THRESHOLD), totalNumRecords);
-  }
-
   public UnmaterializableRecordCounter(double errorThreshold, long totalNumRecords) {
     this.errorThreshold = errorThreshold;
     this.totalNumRecords = totalNumRecords;
@@ -89,15 +83,6 @@ public class UnmaterializableRecordCounter {
           numErrors, totalNumRecords, errorThreshold);
       LOG.error(message);
       throw new ParquetDecodingException(message, cause);
-    }
-  }
-
-  private static float getFloat(ParquetReadOptions options, String key, float defaultValue) {
-    String value = options.getProperty(key);
-    if (value != null) {
-      return Float.valueOf(value);
-    } else {
-      return defaultValue;
     }
   }
 }

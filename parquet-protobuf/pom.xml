@@ -21,7 +21,7 @@
     <groupId>org.apache.parquet</groupId>
     <artifactId>parquet</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.12.0-SNAPSHOT</version>
+    <version>1.8.2-GG</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -31,9 +31,7 @@
 
   <properties>
     <elephant-bird.version>4.4</elephant-bird.version>
-    <protobuf.version>3.5.1</protobuf.version>
-    <!-- allow using protoc from an alternative path -->
-    <protoc.path>protoc</protoc.path>
+    <protobuf.version>2.5.0</protobuf.version>
   </properties>
 
 
@@ -44,7 +42,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>${mockito.version}</version>
+      <version>1.9.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -86,21 +84,10 @@
     </dependency>
   </dependencies>
 
-  <dependencyManagement>
-    <dependencies>
-      <!-- com.twitter.elephantbird brings in an older version of libthrift so we force to use our own one -->
-      <dependency>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>libthrift</artifactId>
-        <version>${format.thrift.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <developers>
     <developer>
       <id>lukasnalezenec</id>
-      <name>Lukas Nalezenec</name>
+      <name>Lukas Nalezenec</name>      
     </developer>
   </developers>
 
@@ -168,10 +155,9 @@
               <tasks>
                 <mkdir dir="${project.build.directory}/generated-test-sources" />
                 <mkdir dir="${project.build.directory}/generated-test-sources/java" />
-                <exec failonerror="true" executable="${protoc.path}">
+                <exec failonerror="true" executable="protoc">
                   <arg value="--java_out=${project.build.directory}/generated-test-sources/java" />
                   <arg value="src/test/resources/TestProtobuf.proto" />
-                  <arg value="src/test/resources/TestProto3.proto" />
                   <arg value="-I." />
                 </exec>
               </tasks>

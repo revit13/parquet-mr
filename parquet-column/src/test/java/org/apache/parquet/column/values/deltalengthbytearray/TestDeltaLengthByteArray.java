@@ -23,7 +23,6 @@ import java.io.IOException;
 import org.junit.Test;
 import org.junit.Assert;
 
-import org.apache.parquet.bytes.DirectByteBufferAllocator;
 import org.apache.parquet.column.values.Utils;
 import org.apache.parquet.column.values.ValuesReader;
 import org.apache.parquet.column.values.delta.DeltaBinaryPackingValuesReader;
@@ -33,17 +32,13 @@ public class TestDeltaLengthByteArray {
 
   String[] values = { "parquet", "hadoop", "mapreduce"};
 
-  private DeltaLengthByteArrayValuesWriter getDeltaLengthByteArrayValuesWriter() {
-    return new DeltaLengthByteArrayValuesWriter(64 * 1024, 64 * 1024, new DirectByteBufferAllocator());
-  }
-
   @Test
   public void testSerialization () throws IOException {
-    DeltaLengthByteArrayValuesWriter writer = getDeltaLengthByteArrayValuesWriter();
+    DeltaLengthByteArrayValuesWriter writer = new DeltaLengthByteArrayValuesWriter(64 * 1024, 64 * 1024);
     DeltaLengthByteArrayValuesReader reader = new DeltaLengthByteArrayValuesReader();
-    
+
     Utils.writeData(writer, values);
-    Binary[] bin = Utils.readData(reader, writer.getBytes().toInputStream(), values.length);
+    Binary[] bin = Utils.readData(reader, writer.getBytes().toByteArray(), values.length);
 
     for(int i =0; i< bin.length ; i++) {
       Assert.assertEquals(Binary.fromString(values[i]), bin[i]);
@@ -52,12 +47,12 @@ public class TestDeltaLengthByteArray {
 
   @Test
   public void testRandomStrings() throws IOException {
-    DeltaLengthByteArrayValuesWriter writer = getDeltaLengthByteArrayValuesWriter();
+    DeltaLengthByteArrayValuesWriter writer = new DeltaLengthByteArrayValuesWriter(64 * 1024, 64 * 1024);
     DeltaLengthByteArrayValuesReader reader = new DeltaLengthByteArrayValuesReader();
 
     String[] values = Utils.getRandomStringSamples(1000, 32);
     Utils.writeData(writer, values);
-    Binary[] bin = Utils.readData(reader, writer.getBytes().toInputStream(), values.length);
+    Binary[] bin = Utils.readData(reader, writer.getBytes().toByteArray(), values.length);
 
     for(int i =0; i< bin.length ; i++) {
       Assert.assertEquals(Binary.fromString(values[i]), bin[i]);
@@ -65,36 +60,12 @@ public class TestDeltaLengthByteArray {
   }
 
   @Test
-  public void testSkipWithRandomStrings() throws IOException {
-    DeltaLengthByteArrayValuesWriter writer = getDeltaLengthByteArrayValuesWriter();
-    DeltaLengthByteArrayValuesReader reader = new DeltaLengthByteArrayValuesReader();
-
-    String[] values = Utils.getRandomStringSamples(1000, 32);
-    Utils.writeData(writer, values);
-
-    reader.initFromPage(values.length, writer.getBytes().toInputStream());
-    for (int i = 0; i < values.length; i += 2) {
-      Assert.assertEquals(Binary.fromString(values[i]), reader.readBytes());
-      reader.skip();
-    }
-
-    reader = new DeltaLengthByteArrayValuesReader();
-    reader.initFromPage(values.length, writer.getBytes().toInputStream());
-    int skipCount;
-    for (int i = 0; i < values.length; i += skipCount + 1) {
-      skipCount = (values.length - i) / 2;
-      Assert.assertEquals(Binary.fromString(values[i]), reader.readBytes());
-      reader.skip(skipCount);
-    }
-  }
-
-  @Test
   public void testLengths() throws IOException {
-    DeltaLengthByteArrayValuesWriter writer = getDeltaLengthByteArrayValuesWriter();
+    DeltaLengthByteArrayValuesWriter writer = new DeltaLengthByteArrayValuesWriter(64 * 1024, 64 * 1024);
     ValuesReader reader = new DeltaBinaryPackingValuesReader();
 
     Utils.writeData(writer, values);
-    int[] bin = Utils.readInts(reader, writer.getBytes().toInputStream(), values.length);
+    int[] bin = Utils.readInts(reader, writer.getBytes().toByteArray(), values.length);
 
     for(int i =0; i< bin.length ; i++) {
       Assert.assertEquals(values[i].length(), bin[i]);

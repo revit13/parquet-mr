@@ -33,6 +33,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Group level of the IO structure
+ *
+ *
+ * @author Julien Le Dem
+ *
  */
 public class GroupColumnIO extends ColumnIO {
   private static final Logger LOG = LoggerFactory.getLogger(GroupColumnIO.class);

@@ -47,10 +47,13 @@ import org.apache.parquet.thrift.struct.ThriftTypeID;
  * Class to read from one protocol in a buffer and then write to another one
  * When there is an exception during reading, it's a skippable exception.
  * When schema is not compatible, the {@link SkippableException} will be thrown.
- * <p>
+ * <p/>
  * When there are fields in the data that are not defined in the schema, the fields will be ignored and the handler will
  * be notified through {@link FieldIgnoredHandler#handleFieldIgnored(org.apache.thrift.protocol.TField)}
  * and {@link FieldIgnoredHandler#handleRecordHasFieldIgnored()}
+ *
+ * @author Julien Le Dem
+ *
  */
 public class BufferedProtocolReadToWrite implements ProtocolPipe {
 
@@ -372,9 +375,6 @@ public class BufferedProtocolReadToWrite implements ProtocolPipe {
         hasFieldsIgnored |= true;
         continue;
       }
-      
-      childFieldsPresent++;
-
       buffer.add(new Action() {
         @Override
         public void write(TProtocol out) throws TException {
@@ -386,7 +386,11 @@ public class BufferedProtocolReadToWrite implements ProtocolPipe {
           return "f=" + currentField.id + "<t=" + typeName(currentField.type) + ">: ";
         }
       });
-      hasFieldsIgnored |= readOneValue(in, field.type, buffer, expectedField.getType());
+      boolean wasIgnored = readOneValue(in, field.type, buffer, expectedField.getType());
+      if (!wasIgnored) {
+        childFieldsPresent++;
+      }
+      hasFieldsIgnored |= wasIgnored;
       in.readFieldEnd();
       buffer.add(FIELD_END);
     }

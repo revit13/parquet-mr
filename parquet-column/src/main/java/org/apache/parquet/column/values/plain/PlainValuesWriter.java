@@ -21,7 +21,6 @@ package org.apache.parquet.column.values.plain;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.bytes.CapacityByteArrayOutputStream;
 import org.apache.parquet.bytes.LittleEndianDataOutputStream;
@@ -34,6 +33,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Plain encoding except for booleans
+ *
+ * @author Julien Le Dem
+ *
  */
 public class PlainValuesWriter extends ValuesWriter {
   private static final Logger LOG = LoggerFactory.getLogger(PlainValuesWriter.class);
@@ -43,8 +45,8 @@ public class PlainValuesWriter extends ValuesWriter {
   private CapacityByteArrayOutputStream arrayOut;
   private LittleEndianDataOutputStream out;
 
-  public PlainValuesWriter(int initialSize, int pageSize, ByteBufferAllocator allocator) {
-    arrayOut = new CapacityByteArrayOutputStream(initialSize, pageSize, allocator);
+  public PlainValuesWriter(int initialSize, int pageSize) {
+    arrayOut = new CapacityByteArrayOutputStream(initialSize, pageSize);
     out = new LittleEndianDataOutputStream(arrayOut);
   }
 
@@ -122,12 +124,6 @@ public class PlainValuesWriter extends ValuesWriter {
   @Override
   public void reset() {
     arrayOut.reset();
-  }
-
-  @Override
-  public void close() {
-    arrayOut.close();
-    out.close();
   }
 
   @Override

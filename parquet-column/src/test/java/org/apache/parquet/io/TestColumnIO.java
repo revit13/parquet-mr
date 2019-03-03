@@ -605,8 +605,6 @@ public class TestColumnIO {
     groupWriter.write(r2);
     recordWriter.flush();
     columns.validate();
-    columns.flush();
-    columns.close();
   }
 }
 final class ValidatingColumnWriteStore implements ColumnWriteStore {
@@ -615,11 +613,6 @@ final class ValidatingColumnWriteStore implements ColumnWriteStore {
 
   ValidatingColumnWriteStore(String[] expected) {
     this.expected = expected;
-  }
-
-  @Override
-  public void close() {
-
   }
 
   @Override
@@ -643,11 +636,6 @@ final class ValidatingColumnWriteStore implements ColumnWriteStore {
       }
 
       @Override
-      public void write(float value, int repetitionLevel, int definitionLevel) {
-        validate(value, repetitionLevel, definitionLevel);
-      }
-
-      @Override
       public void write(boolean value, int repetitionLevel, int definitionLevel) {
         validate(value, repetitionLevel, definitionLevel);
       }
@@ -663,13 +651,8 @@ final class ValidatingColumnWriteStore implements ColumnWriteStore {
       }
 
       @Override
-      public void close() {
-
-      }
-
-      @Override
-      public long getBufferedSizeInMemory() {
-        throw new UnsupportedOperationException();
+      public void write(float value, int repetitionLevel, int definitionLevel) {
+        validate(value, repetitionLevel, definitionLevel);
       }
 
       @Override

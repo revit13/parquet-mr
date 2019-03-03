@@ -18,14 +18,13 @@
  */
 package org.apache.parquet;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.parquet.SemanticVersion.SemanticVersionParseException;
 import org.apache.parquet.VersionParser.ParsedVersion;
 import org.apache.parquet.VersionParser.VersionParseException;
 import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * There was a bug (PARQUET-251) that caused the statistics metadata
@@ -35,9 +34,9 @@ import org.slf4j.LoggerFactory;
  * and thus it's statistics should be ignored / not trusted.
  */
 public class CorruptStatistics {
-  private static final AtomicBoolean alreadyLogged = new AtomicBoolean(false);
-
   private static final Logger LOG = LoggerFactory.getLogger(CorruptStatistics.class);
+
+  private static final AtomicBoolean alreadyLogged = new AtomicBoolean(false);
 
   // the version in which the bug described by jira: PARQUET-251 was fixed
   // the bug involved writing invalid binary statistics, so stats written prior to this
@@ -49,10 +48,6 @@ public class CorruptStatistics {
   /**
    * Decides if the statistics from a file created by createdBy (the created_by field from parquet format)
    * should be ignored because they are potentially corrupt.
-   *
-   * @param createdBy the created-by string from a file footer
-   * @param columnType the type of the column that this is checking
-   * @return true if the statistics may be invalid and should be ignored, false otherwise
    */
   public static boolean shouldIgnoreStatistics(String createdBy, PrimitiveTypeName columnType) {
 
@@ -88,7 +83,7 @@ public class CorruptStatistics {
               semver.compareTo(CDH_5_PARQUET_251_FIXED_END) < 0)) {
         warnOnce("Ignoring statistics because this file was created prior to "
             + PARQUET_251_FIXED_VERSION
-            + ", see PARQUET-251");
+            + ", see PARQUET-251" );
         return true;
       }
 

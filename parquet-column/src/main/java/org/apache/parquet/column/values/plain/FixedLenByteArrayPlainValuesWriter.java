@@ -20,7 +20,6 @@ package org.apache.parquet.column.values.plain;
 
 import java.io.IOException;
 
-import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.bytes.CapacityByteArrayOutputStream;
 import org.apache.parquet.bytes.LittleEndianDataOutputStream;
@@ -33,6 +32,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * ValuesWriter for FIXED_LEN_BYTE_ARRAY.
+ *
+ * @author David Z. Chen <dchen@linkedin.com>
  */
 public class FixedLenByteArrayPlainValuesWriter extends ValuesWriter {
   private static final Logger LOG = LoggerFactory.getLogger(PlainValuesWriter.class);
@@ -40,13 +41,10 @@ public class FixedLenByteArrayPlainValuesWriter extends ValuesWriter {
   private CapacityByteArrayOutputStream arrayOut;
   private LittleEndianDataOutputStream out;
   private int length;
-  private ByteBufferAllocator allocator;
-  
 
-  public FixedLenByteArrayPlainValuesWriter(int length, int initialSize, int pageSize, ByteBufferAllocator allocator) {
+  public FixedLenByteArrayPlainValuesWriter(int length, int initialSize, int pageSize) {
     this.length = length;
-    this.allocator = allocator;
-    this.arrayOut = new CapacityByteArrayOutputStream(initialSize, pageSize, this.allocator);
+    this.arrayOut = new CapacityByteArrayOutputStream(initialSize, pageSize);
     this.out = new LittleEndianDataOutputStream(arrayOut);
   }
 
@@ -82,11 +80,6 @@ public class FixedLenByteArrayPlainValuesWriter extends ValuesWriter {
   @Override
   public void reset() {
     arrayOut.reset();
-  }
-
-  @Override
-  public void close() {
-    arrayOut.close();
   }
 
   @Override

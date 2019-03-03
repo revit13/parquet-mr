@@ -23,6 +23,9 @@ import org.apache.parquet.encoding.bitpacking.IntBasedBitPackingGenerator;
 
 /**
  * main class for code generation hook in build for encodings generation
+ *
+ * @author Julien Le Dem
+ *
  */
 public class Generator {
 

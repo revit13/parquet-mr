@@ -21,7 +21,7 @@
     <groupId>org.apache.parquet</groupId>
     <artifactId>parquet</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.12.0-SNAPSHOT</version>
+    <version>1.8.2-GG</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -52,12 +52,6 @@
       <artifactId>hadoop-client</artifactId>
       <version>${hadoop.version}</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.twitter.elephantbird</groupId>
@@ -106,13 +100,13 @@
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
-      <version>2.9.7</version>
+      <version>1.6</version>
       <scope>provided</scope>
     </dependency>
     <dependency> <!-- for pig runtime in tests -->
       <groupId>org.antlr</groupId>
       <artifactId>antlr-runtime</artifactId>
-      <version>3.5.2</version>
+      <version>3.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -123,37 +117,12 @@
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
+      <artifactId>slf4j-log4j12</artifactId>
       <version>${slf4j.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <!-- needed for Pig tests -->
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.parquet</groupId>
-      <artifactId>parquet-hadoop</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
 
   </dependencies>
-
-  <dependencyManagement>
-    <dependencies>
-      <!-- com.twitter.elephantbird brings in an older version of libthrift so we force to use our own one -->
-      <dependency>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>libthrift</artifactId>
-        <version>${thrift.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <build>
     <plugins>
@@ -166,9 +135,9 @@
       </plugin>
       <!-- thrift -->
       <plugin>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>thrift-maven-plugin</artifactId>
-        <version>${thrift-maven-plugin.version}</version>
+        <groupId>org.apache.thrift.tools</groupId>
+        <artifactId>maven-thrift-plugin</artifactId>
+        <version>0.1.10</version>
         <configuration>
           <thriftExecutable>${thrift.executable}</thriftExecutable>
         </configuration>
@@ -187,51 +156,5 @@
         <artifactId>maven-shade-plugin</artifactId>
       </plugin>
     </plugins>
-  </build>
-
-  <profiles>
-    <profile>
-      <activation>
-        <os>
-          <family>!windows</family>
-        </os>
-      </activation>
-      <id>UnixClassOS</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.2.1</version>
-            <executions>
-              <execution>
-                <id>check-thrift-version</id>
-                <phase>generate-sources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>sh</executable>
-                  <workingDirectory>${basedir}</workingDirectory>
-                  <arguments>
-                    <argument>-c</argument>
-                    <argument>${thrift.executable} -version | fgrep 'Thrift version ${thrift.version}' &amp;&amp; exit 0;
-                      echo "=================================================================================";
-                      echo "========== [FATAL] Build is configured to require Thrift version ${thrift.version} ==========";
-                      echo -n "========== Currently installed: ";
-                      ${thrift.executable} -version;
-                      echo "=================================================================================";
-                      exit 1
-                    </argument>
-                  </arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
+  </build> 
 </project>

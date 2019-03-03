@@ -30,7 +30,7 @@ public interface HiveBinding {
    * From a string which columns names (including hive column), return a list
    * of string columns
    *
-   * @param columns comma separated list of columns
+   * @param comma separated list of columns
    * @return list with virtual columns removed
    */
   public List<String> getColumns(final String columns);
@@ -48,10 +48,10 @@ public interface HiveBinding {
    * practice when modifying JobConf objects in InputFormats, for example
    * HCatalog does this.
    *
-   * @param jobConf a mapred job conf
-   * @param path a path
+   * @param jobConf 
+   * @param path
    * @return cloned jobConf which can be used to read Parquet files
-   * @throws IOException if there is an error pushing projections and filters
+   * @throws IOException
    */
   public JobConf pushProjectionsAndFilters(final JobConf jobConf, final Path path) throws IOException;
 }

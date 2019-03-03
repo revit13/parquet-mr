@@ -22,6 +22,7 @@ import org.apache.thrift.protocol.TField;
 
 /**
  * Implements this class to handle when fields get ignored in {@link BufferedProtocolReadToWrite}
+ * @author Tianshuo Deng
  */
 public abstract class FieldIgnoredHandler {
 
@@ -38,7 +39,7 @@ public abstract class FieldIgnoredHandler {
    * notice the difference between this method and {@link #handleRecordHasFieldIgnored()} is that:
    * for one record, this method maybe called many times when there are multiple fields not defined in the schema.
    *
-   * @param field a thrift field
+   * @param field
    */
   public void handleFieldIgnored(TField field) {
   }

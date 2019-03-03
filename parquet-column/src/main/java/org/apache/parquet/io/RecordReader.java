@@ -21,6 +21,7 @@ package org.apache.parquet.io;
 
 /**
  * used to read reassembled records
+ * @author Julien Le Dem
  *
  * @param <T> the type of the materialized record
  */
@@ -35,7 +36,6 @@ public abstract class RecordReader<T> {
   /**
    * Returns whether the current record should be skipped (dropped)
    * Will be called *after* read()
-   * @return true if the current record should be skipped
    */
   public boolean shouldSkipCurrentRecord() {
     return false;

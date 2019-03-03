@@ -50,6 +50,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * DeprecatedParquetInputFormat is used by cascading. It initializes the recordReader using an initialize method with
  * different parameters than ParquetInputFormat
+ * @author Tianshuo Deng
  */
 public class DeprecatedInputFormatTest {
   final Path parquetPath = new Path("target/test/example/TestInputOutputFormat/parquet");

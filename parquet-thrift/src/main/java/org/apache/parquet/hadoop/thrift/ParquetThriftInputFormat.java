@@ -32,7 +32,7 @@ public class ParquetThriftInputFormat<T> extends ParquetInputFormat<T> {
 
   /**
    * ScroogeReadSupport can be used when reading scrooge records out of parquet file
-   * @param readSupportClass a read support class
+   * @param readSupportClass
    */
   protected ParquetThriftInputFormat(Class readSupportClass) {
     super(readSupportClass);
@@ -43,9 +43,8 @@ public class ParquetThriftInputFormat<T> extends ParquetInputFormat<T> {
    * that is not encoded into the parquet-serialized thrift metadata (for example,
    * writing with Apache Thrift, but reading back into Twitter Scrooge version of
    * the same thrift definition, or a different but compatible Apache Thrift class).
-   * @param conf a mapred jobconf
-   * @param klass a thrift class
-   * @param <T> the Java type of records the configured ReadSupport will produce
+   * @param conf
+   * @param klass
    */
   public static <T> void setThriftClass(JobConf conf, Class<T> klass) {
     conf.set(ThriftReadSupport.THRIFT_READ_CLASS_KEY, klass.getName());
@@ -56,9 +55,8 @@ public class ParquetThriftInputFormat<T> extends ParquetInputFormat<T> {
    * that is not encoded into the parquet-serialized thrift metadata (for example,
    * writing with Apache Thrift, but reading back into Twitter Scrooge version of
    * the same thrift definition, or a different but compatible Apache Thrift class).
-   * @param conf a configuration
-   * @param klass a thrift class
-   * @param <T> the Java type of records the configured ReadSupport will produce
+   * @param conf
+   * @param klass
    */
   public static  <T> void setThriftClass(Configuration conf, Class<T> klass) {
     conf.set(ThriftReadSupport.THRIFT_READ_CLASS_KEY, klass.getName());

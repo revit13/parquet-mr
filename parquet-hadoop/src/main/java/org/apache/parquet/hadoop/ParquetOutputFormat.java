@@ -23,6 +23,9 @@ import static org.apache.parquet.hadoop.ParquetWriter.DEFAULT_BLOCK_SIZE;
 import static org.apache.parquet.hadoop.util.ContextUtil.getConfiguration;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -36,13 +39,19 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.column.ParquetProperties.WriterVersion;
+import org.apache.parquet.crypto.ParquetCipher;
+import org.apache.parquet.crypto.keytools.ParquetKey;
+import org.apache.parquet.crypto.keytools.KmsClient;
+import org.apache.parquet.crypto.keytools.WrappedKeyManager;
+import org.apache.parquet.crypto.ColumnEncryptionProperties;
+import org.apache.parquet.crypto.FileEncryptionProperties;
 import org.apache.parquet.hadoop.ParquetFileWriter.Mode;
 import org.apache.parquet.hadoop.api.WriteSupport;
 import org.apache.parquet.hadoop.api.WriteSupport.WriteContext;
 import org.apache.parquet.hadoop.codec.CodecConfig;
+import org.apache.parquet.hadoop.metadata.ColumnPath;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.util.ConfigurationUtil;
-import org.apache.parquet.hadoop.util.HadoopOutputFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,38 +106,13 @@ import org.slf4j.LoggerFactory;
  *
  * if none of those is set the data is uncompressed.
  *
+ * @author Julien Le Dem
+ *
  * @param <T> the type of the materialized records
  */
 public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
   private static final Logger LOG = LoggerFactory.getLogger(ParquetOutputFormat.class);
 
-  public static enum JobSummaryLevel {
-    /**
-     * Write no summary files
-     */
-    NONE,
-    /**
-     * Write both summary file with row group info and summary file without
-     * (both _metadata and _common_metadata)
-     */
-    ALL,
-    /**
-     * Write only the summary file without the row group info
-     * (_common_metadata only)
-     */
-    COMMON_ONLY
-  }
-
-  /**
-   * An alias for JOB_SUMMARY_LEVEL, where true means ALL and false means NONE
-   */
-  @Deprecated
-  public static final String ENABLE_JOB_SUMMARY   = "parquet.enable.summary-metadata";
-
-  /**
-   * Must be one of the values in {@link JobSummaryLevel} (case insensitive)
-   */
-  public static final String JOB_SUMMARY_LEVEL = "parquet.summary.metadata.level";
   public static final String BLOCK_SIZE           = "parquet.block.size";
   public static final String PAGE_SIZE            = "parquet.page.size";
   public static final String COMPRESSION          = "parquet.compression";
@@ -137,44 +121,25 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
   public static final String ENABLE_DICTIONARY    = "parquet.enable.dictionary";
   public static final String VALIDATION           = "parquet.validation";
   public static final String WRITER_VERSION       = "parquet.writer.version";
+  public static final String ENABLE_JOB_SUMMARY   = "parquet.enable.summary-metadata";
   public static final String MEMORY_POOL_RATIO    = "parquet.memory.pool.ratio";
   public static final String MIN_MEMORY_ALLOCATION = "parquet.memory.min.chunk.size";
   public static final String MAX_PADDING_BYTES    = "parquet.writer.max-padding";
   public static final String MIN_ROW_COUNT_FOR_PAGE_SIZE_CHECK = "parquet.page.size.row.check.min";
   public static final String MAX_ROW_COUNT_FOR_PAGE_SIZE_CHECK = "parquet.page.size.row.check.max";
   public static final String ESTIMATE_PAGE_SIZE_CHECK = "parquet.page.size.check.estimate";
-  public static final String COLUMN_INDEX_TRUNCATE_LENGTH = "parquet.columnindex.truncate.length";
-  public static final String PAGE_ROW_COUNT_LIMIT = "parquet.page.row.count.limit";
 
-  public static JobSummaryLevel getJobSummaryLevel(Configuration conf) {
-    String level = conf.get(JOB_SUMMARY_LEVEL);
-    String deprecatedFlag = conf.get(ENABLE_JOB_SUMMARY);
+  static final String encryptedSuffix = ".encrypted";
 
-    if (deprecatedFlag != null) {
-      LOG.warn("Setting " + ENABLE_JOB_SUMMARY + " is deprecated, please use " + JOB_SUMMARY_LEVEL);
-    }
-
-    if (level != null && deprecatedFlag != null) {
-      LOG.warn("Both " + JOB_SUMMARY_LEVEL + " and " + ENABLE_JOB_SUMMARY + " are set! " + ENABLE_JOB_SUMMARY + " will be ignored.");
-    }
-
-    if (level != null) {
-      return JobSummaryLevel.valueOf(level.toUpperCase());
-    }
-
-    if (deprecatedFlag != null) {
-      return Boolean.valueOf(deprecatedFlag) ? JobSummaryLevel.ALL : JobSummaryLevel.NONE;
-    }
-
-    return JobSummaryLevel.ALL;
-  }
+  // default to no padding for now
+  private static final int DEFAULT_MAX_PADDING_SIZE = 0;
 
   public static void setWriteSupportClass(Job job,  Class<?> writeSupportClass) {
     getConfiguration(job).set(WRITE_SUPPORT_CLASS, writeSupportClass.getName());
   }
 
   public static void setWriteSupportClass(JobConf job, Class<?> writeSupportClass) {
-      job.set(WRITE_SUPPORT_CLASS, writeSupportClass.getName());
+    job.set(WRITE_SUPPORT_CLASS, writeSupportClass.getName());
   }
 
   public static Class<?> getWriteSupportClass(Configuration configuration) {
@@ -311,41 +276,17 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
   }
 
   private static int getMaxPaddingSize(Configuration conf) {
-    return conf.getInt(MAX_PADDING_BYTES, ParquetWriter.MAX_PADDING_SIZE_DEFAULT);
+    // default to no padding, 0% of the row group size
+    return conf.getInt(MAX_PADDING_BYTES, DEFAULT_MAX_PADDING_SIZE);
   }
 
-  public static void setColumnIndexTruncateLength(JobContext jobContext, int length) {
-    setColumnIndexTruncateLength(getConfiguration(jobContext), length);
-  }
-
-  public static void setColumnIndexTruncateLength(Configuration conf, int length) {
-    conf.setInt(COLUMN_INDEX_TRUNCATE_LENGTH, length);
-  }
-
-  private static int getColumnIndexTruncateLength(Configuration conf) {
-    return conf.getInt(COLUMN_INDEX_TRUNCATE_LENGTH, ParquetProperties.DEFAULT_COLUMN_INDEX_TRUNCATE_LENGTH);
-  }
-
-  public static void setPageRowCountLimit(JobContext jobContext, int rowCount) {
-    setPageRowCountLimit(getConfiguration(jobContext), rowCount);
-  }
-
-  public static void setPageRowCountLimit(Configuration conf, int rowCount) {
-    conf.setInt(PAGE_ROW_COUNT_LIMIT, rowCount);
-  }
-
-  private static int getPageRowCountLimit(Configuration conf) {
-    return conf.getInt(PAGE_ROW_COUNT_LIMIT, ParquetProperties.DEFAULT_PAGE_ROW_COUNT_LIMIT);
-  }
 
   private WriteSupport<T> writeSupport;
   private ParquetOutputCommitter committer;
 
   /**
    * constructor used when this OutputFormat in wrapped in another one (In Pig for example)
-   *
    * @param writeSupport the class used to convert the incoming records
-   * @param <S> the Java write support type
    */
   public <S extends WriteSupport<T>> ParquetOutputFormat(S writeSupport) {
     this.writeSupport = writeSupport;
@@ -354,8 +295,6 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
   /**
    * used when directly using the output format and configuring the write support implementation
    * using parquet.write.support.class
-   *
-   * @param <S> the Java write support type
    */
   public <S extends WriteSupport<T>> ParquetOutputFormat() {
   }
@@ -369,19 +308,139 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
 
     final Configuration conf = getConfiguration(taskAttemptContext);
 
+    Path file;
     CompressionCodecName codec = getCodec(taskAttemptContext);
+
     String extension = codec.getExtension() + ".parquet";
-    Path file = getDefaultWorkFile(taskAttemptContext, extension);
-    return getRecordWriter(conf, file, codec);
+
+    FileEncryptionProperties fileEncryptor = getEncryptionProperties(conf);
+
+    if (null != fileEncryptor) extension += encryptedSuffix;
+
+    file = getDefaultWorkFile(taskAttemptContext, extension);
+
+    return getRecordWriter(conf, file, codec, fileEncryptor);
+  }
+
+  private FileEncryptionProperties getEncryptionProperties(Configuration conf) throws IOException {
+
+    String footerKey = conf.getTrimmed("encryption.footer.key");
+    String plaintextFooterStr = conf.getTrimmed("encryption.plaintext.footer");
+    String columnKeys[] = conf.getTrimmedStrings("encryption.column.keys");
+
+    // File shouldn't be encrypted
+    if (null == footerKey && (null == columnKeys || columnKeys.length == 0)) return null;
+    
+    if (null == footerKey) {
+      throw new IOException("Null footer key");
+    }
+
+    boolean dataKeyListAvailable = true;
+    HashMap<String,byte[]> dataEncryptionKeyMap = null;
+    WrappedKeyManager keyWrapper = null; //TODO allow direct?
+
+    String encryptionKeys[] = conf.getTrimmedStrings("encryption.key.list");
+    if (null != encryptionKeys && encryptionKeys.length > 0) {
+      dataEncryptionKeyMap = new HashMap<String,byte[]>();
+      int nKeys = encryptionKeys.length;
+      for (int i=0; i < nKeys; i++) {
+        String[] parts = encryptionKeys[i].split(":");
+        String keyName = parts[0].trim();
+        byte[] keyBytes = Base64.getDecoder().decode(parts[1].trim());
+        //TODO check parts
+        dataEncryptionKeyMap.put(keyName, keyBytes);
+      }
+    }
+    else {
+      dataKeyListAvailable = false;
+      String kmsClientClass = conf.getTrimmed("encryption.kms.client.class");
+      KmsClient kmsClient;
+      if (null != kmsClientClass) {
+        // TODO
+        if (!kmsClientClass.equals("demo.VaultClient")) {
+          throw new IOException("Unsupported KMS client " + kmsClientClass);
+        }
+        kmsClient = new VaultClient(conf);
+        
+      }
+      else {
+        throw new IOException("Both encryption.key.list and encryption.kms.client.class are null");
+      }
+      keyWrapper = new WrappedKeyManager(kmsClient); //TODO add external storage?
+    }
+
+
+    String algo = conf.getTrimmed("encryption.algorithm");
+    ParquetCipher cipher = ParquetCipher.fromConf(algo);
+
+    byte[] aadBytes = null;
+    String aad = conf.getTrimmed("encryption.writer.aad");
+    if (null != aad) {
+      aadBytes = aad.getBytes(StandardCharsets.UTF_8);
+    }
+
+    ParquetKey footerCipherKey = null;
+
+    if (dataKeyListAvailable) {
+      byte[] footerKeyBytes = dataEncryptionKeyMap.get(footerKey);
+      if (null == footerKeyBytes) throw new IOException("Footer key not found: " + footerKey);
+      footerCipherKey = new ParquetKey(footerKeyBytes, footerKey);
+    }
+    else {
+      footerCipherKey = keyWrapper.generateKey(footerKey);
+    }
+
+    HashMap<ColumnPath, ColumnEncryptionProperties> columns = null;
+    if (null != columnKeys && columnKeys.length > 0) {
+      columns = new HashMap<ColumnPath, ColumnEncryptionProperties>();
+      for (int i = 0; i < columnKeys.length; i++) {
+        String[] parts = columnKeys[i].split(":");
+        String columnName = parts[0].trim();
+        String columnKey = parts[1].trim();
+        ParquetKey columnEncryptionKey = null;
+        if (dataKeyListAvailable) {
+          byte[] keyBytes =  dataEncryptionKeyMap.get(columnKey);
+          if (null == keyBytes) throw new IOException("Column key not found: " + columnKey);
+          columnEncryptionKey = new ParquetKey(keyBytes, columnKey);
+        }
+        else {
+          columnEncryptionKey = keyWrapper.generateKey(columnKey);
+        }
+        ColumnEncryptionProperties cmd = ColumnEncryptionProperties.builder(columnName)
+            .withKey(columnEncryptionKey.getBytes())
+            .withKeyMetaData(columnEncryptionKey.getMetaData())
+            .build();
+        columns.put(cmd.getPath(), cmd);
+      }
+    }
+
+    boolean plaintextFooter = Boolean.parseBoolean(plaintextFooterStr);
+    
+    FileEncryptionProperties.Builder propertiesBuilder = FileEncryptionProperties.builder(footerCipherKey.getBytes())
+    .withFooterKeyMetadata(footerCipherKey.getMetaData())
+    .withAlgorithm(cipher)
+    .withColumnProperties(columns)
+    .withAADPrefix(aadBytes);
+    
+    if (plaintextFooter) propertiesBuilder = propertiesBuilder.withPlaintextFooter();
+    
+    return propertiesBuilder.build();
   }
 
   public RecordWriter<Void, T> getRecordWriter(TaskAttemptContext taskAttemptContext, Path file)
       throws IOException, InterruptedException {
+    //TODO encr
     return getRecordWriter(getConfiguration(taskAttemptContext), file, getCodec(taskAttemptContext));
   }
 
   public RecordWriter<Void, T> getRecordWriter(Configuration conf, Path file, CompressionCodecName codec)
-        throws IOException, InterruptedException {
+      throws IOException, InterruptedException {
+    return getRecordWriter(conf, file, codec, (FileEncryptionProperties) null);
+  }
+
+  public RecordWriter<Void, T> getRecordWriter(Configuration conf, Path file, CompressionCodecName codec,
+      FileEncryptionProperties encryptionProperties)
+          throws IOException, InterruptedException {
     final WriteSupport<T> writeSupport = getWriteSupport(conf);
 
     ParquetProperties props = ParquetProperties.builder()
@@ -392,8 +451,6 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
         .estimateRowCountForPageSizeCheck(getEstimatePageSizeCheck(conf))
         .withMinRowCountForPageSizeCheck(getMinRowCountForPageSizeCheck(conf))
         .withMaxRowCountForPageSizeCheck(getMaxRowCountForPageSizeCheck(conf))
-        .withColumnIndexTruncateLength(getColumnIndexTruncateLength(conf))
-        .withPageRowCountLimit(getPageRowCountLimit(conf))
         .build();
 
     long blockSize = getLongBlockSize(conf);
@@ -411,13 +468,11 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
       LOG.info("Page size checking is: {}", (props.estimateNextSizeCheck() ? "estimated" : "constant"));
       LOG.info("Min row count for page size check is: {}", props.getMinRowCountForPageSizeCheck());
       LOG.info("Max row count for page size check is: {}", props.getMaxRowCountForPageSizeCheck());
-      LOG.info("Truncate length for column indexes is: {}", props.getColumnIndexTruncateLength());
-      LOG.info("Page row count limit to {}", props.getPageRowCountLimit());
     }
 
     WriteContext init = writeSupport.init(conf);
-    ParquetFileWriter w = new ParquetFileWriter(HadoopOutputFile.fromPath(file, conf),
-        init.getSchema(), Mode.CREATE, blockSize, maxPaddingSize, props.getColumnIndexTruncateLength());
+    ParquetFileWriter w = new ParquetFileWriter(
+        conf, init.getSchema(), file, Mode.CREATE, blockSize, maxPaddingSize, encryptionProperties);
     w.start();
 
     float maxLoad = conf.getFloat(ParquetOutputFormat.MEMORY_POOL_RATIO,

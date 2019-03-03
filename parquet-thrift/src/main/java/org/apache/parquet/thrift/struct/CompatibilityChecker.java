@@ -42,6 +42,8 @@ import org.apache.parquet.Strings;
  * 2. Should not change field type for an existing field
  * 3. Should not delete existing field
  * 4. Should not make requirement type more restrictive for a field in new thrift struct
+ *
+ * @author Tianshuo Deng
  */
 public class CompatibilityChecker {
 

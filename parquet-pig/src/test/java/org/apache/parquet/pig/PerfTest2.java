@@ -53,7 +53,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ *
  * Uses directly loader and storer to bypass the scheduling overhead
+ *
+ * @author Julien Le Dem
+ *
  */
 public class PerfTest2 {
 

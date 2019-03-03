@@ -21,7 +21,6 @@ package org.apache.parquet.column.impl;
 import org.apache.parquet.CorruptDeltaByteArrays;
 import org.apache.parquet.SemanticVersion;
 import org.apache.parquet.VersionParser.ParsedVersion;
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.column.ColumnDescriptor;
 import org.apache.parquet.column.Encoding;
@@ -37,10 +36,8 @@ import org.apache.parquet.io.api.PrimitiveConverter;
 import org.apache.parquet.schema.PrimitiveType;
 import org.junit.Assert;
 import org.junit.Test;
-import org.apache.parquet.bytes.HeapByteBufferAllocator;
 
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,20 +74,16 @@ public class TestCorruptDeltaByteArrays {
     assertFalse(CorruptDeltaByteArrays.requiresSequentialReads(fixed, Encoding.DELTA_BYTE_ARRAY));
   }
 
-  private DeltaByteArrayWriter getDeltaByteArrayWriter() {
-    return new DeltaByteArrayWriter(10, 100, new HeapByteBufferAllocator());
-  }
-
   @Test
   public void testReassemblyWithCorruptPage() throws Exception {
-    DeltaByteArrayWriter writer = getDeltaByteArrayWriter();
+    DeltaByteArrayWriter writer = new DeltaByteArrayWriter(10, 100);
 
     String lastValue = null;
     for (int i = 0; i < 10; i += 1) {
       lastValue = str(i);
       writer.writeBytes(Binary.fromString(lastValue));
     }
-    ByteBuffer firstPageBytes = writer.getBytes().toByteBuffer();
+    byte[] firstPageBytes = writer.getBytes().toByteArray();
 
     writer.reset(); // sets previous to new byte[0]
     corruptWriter(writer, lastValue);
@@ -98,16 +91,16 @@ public class TestCorruptDeltaByteArrays {
     for (int i = 10; i < 20; i += 1) {
       writer.writeBytes(Binary.fromString(str(i)));
     }
-    ByteBuffer corruptPageBytes = writer.getBytes().toByteBuffer();
+    byte[] corruptPageBytes = writer.getBytes().toByteArray();
 
     DeltaByteArrayReader firstPageReader = new DeltaByteArrayReader();
-    firstPageReader.initFromPage(10, ByteBufferInputStream.wrap(firstPageBytes));
+    firstPageReader.initFromPage(10, firstPageBytes, 0);
     for (int i = 0; i < 10; i += 1) {
-      assertEquals(str(i), firstPageReader.readBytes().toStringUsingUTF8());
+      assertEquals(firstPageReader.readBytes().toStringUsingUTF8(), str(i));
     }
 
     DeltaByteArrayReader corruptPageReader = new DeltaByteArrayReader();
-    corruptPageReader.initFromPage(10, ByteBufferInputStream.wrap(corruptPageBytes));
+    corruptPageReader.initFromPage(10, corruptPageBytes, 0);
     try {
       corruptPageReader.readBytes();
       fail("Corrupt page did not throw an exception when read");
@@ -116,7 +109,7 @@ public class TestCorruptDeltaByteArrays {
     }
 
     DeltaByteArrayReader secondPageReader = new DeltaByteArrayReader();
-    secondPageReader.initFromPage(10, ByteBufferInputStream.wrap(corruptPageBytes));
+    secondPageReader.initFromPage(10, corruptPageBytes, 0);
     secondPageReader.setPreviousReader(firstPageReader);
 
     for (int i = 10; i < 20; i += 1) {
@@ -126,28 +119,28 @@ public class TestCorruptDeltaByteArrays {
 
   @Test
   public void testReassemblyWithoutCorruption() throws Exception {
-    DeltaByteArrayWriter writer = getDeltaByteArrayWriter();
+    DeltaByteArrayWriter writer = new DeltaByteArrayWriter(10, 100);
 
     for (int i = 0; i < 10; i += 1) {
       writer.writeBytes(Binary.fromString(str(i)));
     }
-    ByteBuffer firstPageBytes = writer.getBytes().toByteBuffer();
+    byte[] firstPageBytes = writer.getBytes().toByteArray();
 
     writer.reset(); // sets previous to new byte[0]
 
     for (int i = 10; i < 20; i += 1) {
       writer.writeBytes(Binary.fromString(str(i)));
     }
-    ByteBuffer secondPageBytes = writer.getBytes().toByteBuffer();
+    byte[] secondPageBytes = writer.getBytes().toByteArray();
 
     DeltaByteArrayReader firstPageReader = new DeltaByteArrayReader();
-    firstPageReader.initFromPage(10, ByteBufferInputStream.wrap(firstPageBytes));
+    firstPageReader.initFromPage(10, firstPageBytes, 0);
     for (int i = 0; i < 10; i += 1) {
       assertEquals(firstPageReader.readBytes().toStringUsingUTF8(), str(i));
     }
 
     DeltaByteArrayReader secondPageReader = new DeltaByteArrayReader();
-    secondPageReader.initFromPage(10, ByteBufferInputStream.wrap(secondPageBytes));
+    secondPageReader.initFromPage(10, secondPageBytes, 0);
     secondPageReader.setPreviousReader(firstPageReader);
 
     for (int i = 10; i < 20; i += 1) {
@@ -157,28 +150,28 @@ public class TestCorruptDeltaByteArrays {
 
   @Test
   public void testOldReassemblyWithoutCorruption() throws Exception {
-    DeltaByteArrayWriter writer = getDeltaByteArrayWriter();
+    DeltaByteArrayWriter writer = new DeltaByteArrayWriter(10, 100);
 
     for (int i = 0; i < 10; i += 1) {
       writer.writeBytes(Binary.fromString(str(i)));
     }
-    ByteBuffer firstPageBytes = writer.getBytes().toByteBuffer();
+    byte[] firstPageBytes = writer.getBytes().toByteArray();
 
     writer.reset(); // sets previous to new byte[0]
 
     for (int i = 10; i < 20; i += 1) {
       writer.writeBytes(Binary.fromString(str(i)));
     }
-    ByteBuffer secondPageBytes = writer.getBytes().toByteBuffer();
+    byte[] secondPageBytes = writer.getBytes().toByteArray();
 
     DeltaByteArrayReader firstPageReader = new DeltaByteArrayReader();
-    firstPageReader.initFromPage(10, ByteBufferInputStream.wrap(firstPageBytes));
+    firstPageReader.initFromPage(10, firstPageBytes, 0);
     for (int i = 0; i < 10; i += 1) {
       assertEquals(firstPageReader.readBytes().toStringUsingUTF8(), str(i));
     }
 
     DeltaByteArrayReader secondPageReader = new DeltaByteArrayReader();
-    secondPageReader.initFromPage(10, ByteBufferInputStream.wrap(secondPageBytes));
+    secondPageReader.initFromPage(10, secondPageBytes, 0);
 
     for (int i = 10; i < 20; i += 1) {
       assertEquals(secondPageReader.readBytes().toStringUsingUTF8(), str(i));
@@ -203,7 +196,7 @@ public class TestCorruptDeltaByteArrays {
     }
     // use a byte array backed BytesInput because it is reused
     BytesInput rd = BytesInput.from(rdValues.getBytes().toByteArray());
-    DeltaByteArrayWriter writer = getDeltaByteArrayWriter();
+    DeltaByteArrayWriter writer = new DeltaByteArrayWriter(10, 100);
     String lastValue = null;
     List<String> values = new ArrayList<String>();
     for (int i = 0; i < 10; i += 1) {

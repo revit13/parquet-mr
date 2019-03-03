@@ -32,6 +32,9 @@ import org.apache.parquet.schema.TypeConverter;
 
 /**
  * Dummy implementation for perf tests
+ *
+ * @author Julien Le Dem
+ *
  */
 public final class DummyRecordConverter extends RecordMaterializer<Object> {
 

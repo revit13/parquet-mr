@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.pig.Algebraic;
 import org.apache.pig.EvalFunc;
@@ -33,22 +34,38 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.apache.pig.impl.util.UDFContext;
+import org.apache.pig.impl.util.Utils;
+import org.apache.pig.parser.ParserException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 
 /**
  * computes a summary of the input to a json string
+ *
+ * @author Julien Le Dem
+ *
  */
 public class Summary extends EvalFunc<String> implements Algebraic {
 
   private static final TupleFactory TF = TupleFactory.getInstance();
+  private Schema inputSchema;
+  private String signature;
 
   public static class Initial extends EvalFunc<Tuple> {
 
+    private Schema inputSchema;
+
+    @Override
+    public void setUDFContextSignature(String signature) {
+      inputSchema = Summary.getInputSchema(signature);
+    }
+
     @Override
     public Tuple exec(Tuple t) throws IOException {
-      return new JSONTuple(sumUp(getInputSchema(), t));
+      return new JSONTuple(sumUp(inputSchema, t));
     }
   }
 
@@ -162,6 +179,18 @@ public class Summary extends EvalFunc<String> implements Algebraic {
 
   }
 
+  private static Properties getProperties(String signature) {
+    return UDFContext.getUDFContext().getUDFProperties(Summary.class, new String[] { signature });
+  }
+
+  private static Schema getInputSchema(String signature) {
+    try {
+      return Utils.getSchemaFromString(getProperties(signature).getProperty("inputSchema"));
+    } catch (ParserException e) {
+       throw new RuntimeException(e);
+    }
+  }
+
   private static TupleSummaryData getData(Tuple tuple) throws ExecException {
     if (tuple instanceof JSONTuple) {
       return ((JSONTuple) tuple).data;
@@ -207,7 +236,7 @@ public class Summary extends EvalFunc<String> implements Algebraic {
 
   @Override
   public String exec(Tuple t) throws IOException {
-    return SummaryData.toPrettyJSON(sumUp(getInputSchema(), t));
+    return SummaryData.toPrettyJSON(sumUp(inputSchema, t));
   }
 
   @Override
@@ -223,6 +252,32 @@ public class Summary extends EvalFunc<String> implements Algebraic {
   @Override
   public String getFinal() {
     return Final.class.getName();
+  }
+
+  @Override
+  public void setInputSchema(Schema input) {
+    try {
+      // relation.bag.tuple
+      this.inputSchema = input.getField(0).schema.getField(0).schema;
+      saveSchemaToUDFContext();
+    } catch (FrontendException e) {
+      throw new RuntimeException("Usage: B = FOREACH (GROUP A ALL) GENERATE Summary(A); Can not get schema from " + input, e);
+    } catch (RuntimeException e) {
+      throw new RuntimeException("Usage: B = FOREACH (GROUP A ALL) GENERATE Summary(A); Can not get schema from "+input, e);
+    }
+  }
+
+  @Override
+  public void setUDFContextSignature(String signature) {
+    this.signature = signature;
+    saveSchemaToUDFContext();
+  }
+
+  private void saveSchemaToUDFContext() {
+    if (signature != null && inputSchema != null) {
+      String schemaString = inputSchema.toString();
+      getProperties(signature).put("inputSchema", schemaString.substring(1, schemaString.length() - 1));
+    }
   }
 
 }

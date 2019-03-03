@@ -30,6 +30,9 @@ import java.util.logging.Level;
  * <code>
  *   if (DEBUG) LOG.debug("removed by the compiler if DEBUG is a false constant")
  * </code>
+ *
+ * @author Julien Le Dem
+ *
  */
 public class Log {
 
@@ -61,7 +64,7 @@ public class Log {
 
   /**
    * prints a debug message
-   * @param m a log message
+   * @param m
    */
   public void debug(Object m) {
     if (m instanceof Throwable) {
@@ -73,8 +76,8 @@ public class Log {
 
   /**
    * prints a debug message
-   * @param m a log message
-   * @param t a throwable error
+   * @param m
+   * @param t
    */
   public void debug(Object m, Throwable t) {
     logger.debug(String.valueOf(m), t);
@@ -82,7 +85,7 @@ public class Log {
 
   /**
    * prints an info message
-   * @param m a log message
+   * @param m
    */
   public void info(Object m) {
     if (m instanceof Throwable) {
@@ -94,8 +97,8 @@ public class Log {
 
   /**
    * prints an info message
-   * @param m a log message
-   * @param t a throwable error
+   * @param m
+   * @param t
    */
   public void info(Object m, Throwable t) {
     logger.info(String.valueOf(m), t);
@@ -103,7 +106,7 @@ public class Log {
 
   /**
    * prints a warn message
-   * @param m a log message
+   * @param m
    */
   public void warn(Object m) {
     if (m instanceof Throwable) {
@@ -115,8 +118,8 @@ public class Log {
 
   /**
    * prints a warn message
-   * @param m a log message
-   * @param t a throwable error
+   * @param m
+   * @param t
    */
   public void warn(Object m, Throwable t) {
     logger.warn(String.valueOf(m), t);
@@ -124,7 +127,7 @@ public class Log {
 
   /**
    * prints an error message
-   * @param m a log message
+   * @param m
    */
   public void error(Object m) {
     if (m instanceof Throwable) {
@@ -136,8 +139,8 @@ public class Log {
 
   /**
    * prints an error message
-   * @param m a log message
-   * @param t a throwable error
+   * @param m
+   * @param t
    */
   public void error(Object m, Throwable t) {
     logger.error(String.valueOf(m), t);

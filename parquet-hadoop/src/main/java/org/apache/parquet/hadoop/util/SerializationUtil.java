@@ -45,12 +45,13 @@ public final class SerializationUtil {
   private SerializationUtil() { }
 
   /**
-   * Writes an object to a configuration.
+   * Reads an object (that was written using
+   * {@link #writeObjectToConfAsBase64}) from a configuration.
    *
    * @param key for the configuration
-   * @param obj the object to write
    * @param conf to read from
-   * @throws IOException if there is an error while writing
+   * @return the read object, or null if key is not present in conf
+   * @throws IOException
    */
   public static void writeObjectToConfAsBase64(String key, Object obj, Configuration conf) throws IOException {
     ByteArrayOutputStream baos = null;
@@ -77,9 +78,8 @@ public final class SerializationUtil {
    *
    * @param key for the configuration
    * @param conf to read from
-   * @param <T> the Java type of the deserialized object
    * @return the read object, or null if key is not present in conf
-   * @throws IOException if there is an error while reading
+   * @throws IOException
    */
   @SuppressWarnings("unchecked")
   public static <T> T readObjectFromConfAsBase64(String key, Configuration conf) throws IOException {

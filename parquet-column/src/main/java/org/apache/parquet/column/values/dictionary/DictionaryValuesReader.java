@@ -19,10 +19,9 @@
 package org.apache.parquet.column.values.dictionary;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.BytesUtils;
 import org.apache.parquet.column.Dictionary;
 import org.apache.parquet.column.values.ValuesReader;
@@ -34,11 +33,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Reads values that have been dictionary encoded
+ *
+ * @author Julien Le Dem
+ *
  */
 public class DictionaryValuesReader extends ValuesReader {
   private static final Logger LOG = LoggerFactory.getLogger(DictionaryValuesReader.class);
 
-  private ByteBufferInputStream in;
+  private ByteArrayInputStream in;
 
   private Dictionary dictionary;
 
@@ -49,12 +51,11 @@ public class DictionaryValuesReader extends ValuesReader {
   }
 
   @Override
-  public void initFromPage(int valueCount, ByteBufferInputStream stream)
+  public void initFromPage(int valueCount, byte[] page, int offset)
       throws IOException {
-    this.in = stream.remainingStream();
-    if (in.available() > 0) {
-      LOG.debug("init from page at offset {} for length {}",
-          stream.position(), stream.available());
+    this.in = new ByteArrayInputStream(page, offset, page.length - offset);
+    if (page.length - offset > 0) {
+      LOG.debug("init from page at offset {} for length {}", offset, (page.length - offset));
       int bitWidth = BytesUtils.readIntLittleEndianOnOneByte(in);
       LOG.debug("bit width {}", bitWidth);
       decoder = new RunLengthBitPackingHybridDecoder(bitWidth, in);

@@ -22,7 +22,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.slf4j.Logger;
@@ -30,6 +29,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * utility methods to deal with bytes
+ *
+ * @author Julien Le Dem
+ *
  */
 public class BytesUtils {
   private static final Logger LOG = LoggerFactory.getLogger(BytesUtils.class);
@@ -47,25 +49,10 @@ public class BytesUtils {
 
   /**
    * reads an int in little endian at the given position
-   * @param in a byte buffer
-   * @param offset an offset into the byte buffer
-   * @return the integer at position offset read using little endian byte order
-   * @throws IOException if there is an exception reading from the byte buffer
-   */
-  public static int readIntLittleEndian(ByteBuffer in, int offset) throws IOException {
-    int ch4 = in.get(offset) & 0xff;
-    int ch3 = in.get(offset + 1) & 0xff;
-    int ch2 = in.get(offset + 2) & 0xff;
-    int ch1 = in.get(offset + 3) & 0xff;
-    return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
-  }
-  
-  /**
-   * reads an int in little endian at the given position
-   * @param in a byte array
-   * @param offset an offset into the byte array
-   * @return the integer at position offset read using little endian byte order
-   * @throws IOException if there is an exception reading from the byte array
+   * @param in
+   * @param offset
+   * @return
+   * @throws IOException
    */
   public static int readIntLittleEndian(byte[] in, int offset) throws IOException {
     int ch4 = in[offset] & 0xff;
@@ -162,11 +149,6 @@ public class BytesUtils {
   /**
    * Write a little endian int to out, using the the number of bytes required by
    * bit width
-   * @param out an output stream
-   * @param v an int value
-   * @param bitWidth bit width for padding
-   * @throws IOException if there is an exception while writing
-   *
    */
   public static void writeIntLittleEndianPaddedOnBitWidth(OutputStream out, int v, int bitWidth)
       throws IOException {
@@ -206,9 +188,9 @@ public class BytesUtils {
 
   /**
    * uses a trick mentioned in https://developers.google.com/protocol-buffers/docs/encoding to read zigZag encoded data
-   * @param in an input stream
-   * @return the value of a zig-zag varint read from the current position in the stream
-   * @throws IOException if there is an exception while reading
+   * @param in
+   * @return
+   * @throws IOException
    */
   public static int readZigZagVarInt(InputStream in) throws IOException {
     int raw = readUnsignedVarInt(in);
@@ -224,52 +206,8 @@ public class BytesUtils {
     out.write(value & 0x7F);
   }
 
-  public static void writeUnsignedVarInt(int value, ByteBuffer dest) throws IOException {
-    while ((value & 0xFFFFFF80) != 0L) {
-      dest.putInt((value & 0x7F) | 0x80);
-      value >>>= 7;
-    }
-    dest.putInt(value & 0x7F);
-  }
-
   public static void writeZigZagVarInt(int intValue, OutputStream out) throws IOException{
     writeUnsignedVarInt((intValue << 1) ^ (intValue >> 31), out);
-  }
-
-  /**
-   * uses a trick mentioned in https://developers.google.com/protocol-buffers/docs/encoding to read zigZag encoded data
-   * TODO: the implementation is compatible with readZigZagVarInt. Is there a need for different functions?
-   * @param in an input stream
-   * @return the value of a zig-zag var-long read from the current position in the stream
-   * @throws IOException if there is an exception while reading
-   */
-  public static long readZigZagVarLong(InputStream in) throws IOException {
-    long raw = readUnsignedVarLong(in);
-    long temp = (((raw << 63) >> 63) ^ raw) >> 1;
-    return temp ^ (raw & (1L << 63));
-  }
-
-  public static long readUnsignedVarLong(InputStream in) throws IOException {
-    long value = 0;
-    int i = 0;
-    long b;
-    while (((b = in.read()) & 0x80) != 0) {
-      value |= (b & 0x7F) << i;
-      i += 7;
-    }
-    return value | (b << i);
-  }
-
-  public static void writeUnsignedVarLong(long value, OutputStream out) throws IOException {
-    while ((value & 0xFFFFFFFFFFFFFF80L) != 0L) {
-      out.write((int)((value & 0x7F) | 0x80));
-      value >>>= 7;
-    }
-    out.write((int)(value & 0x7F));
-  }
-
-  public static void writeZigZagVarLong(long longValue, OutputStream out) throws IOException{
-    writeUnsignedVarLong((longValue << 1) ^ (longValue >> 63), out);
   }
 
   /**

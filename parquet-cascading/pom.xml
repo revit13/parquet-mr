@@ -21,7 +21,7 @@
     <groupId>org.apache.parquet</groupId>
     <artifactId>parquet</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.12.0-SNAPSHOT</version>
+    <version>1.8.2-GG</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -66,12 +66,6 @@
       <artifactId>hadoop-client</artifactId>
       <version>${hadoop.version}</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.parquet</groupId>
@@ -83,7 +77,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
-      <version>${mockito.version}</version>
+      <version>1.9.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -109,51 +103,6 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>../parquet-cascading-common23/src/main/java</source>
-              </sources>
-            </configuration>
-          </execution>
-          <execution>
-            <id>add-test-source</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>add-test-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>../parquet-cascading-common23/src/test/java</source>
-              </sources>
-            </configuration>
-          </execution>
-          <execution>
-            <id>add-test-resource</id>
-            <phase>generate-test-resources</phase>
-            <goals>
-              <goal>add-test-resource</goal>
-            </goals>
-            <configuration>
-              <resources>
-                <resource>
-                  <directory>../parquet-cascading-common23/src/test/resources</directory>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
       </plugin>
       <plugin>
@@ -161,13 +110,11 @@
         <artifactId>maven-jar-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>thrift-maven-plugin</artifactId>
-        <version>${thrift-maven-plugin.version}</version>
+        <groupId>org.apache.thrift.tools</groupId>
+        <artifactId>maven-thrift-plugin</artifactId>
+        <version>0.1.10</version>
         <configuration>
           <thriftExecutable>${thrift.executable}</thriftExecutable>
-          <thriftSourceRoot>../parquet-cascading-common23/src/main/thrift</thriftSourceRoot>
-          <thriftTestSourceRoot>../parquet-cascading-common23/src/test/thrift</thriftTestSourceRoot>
         </configuration>
         <executions>
           <execution>

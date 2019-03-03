@@ -55,9 +55,10 @@ import static org.apache.parquet.Preconditions.checkNotNull;
   * Parquet schema.
   * Currently, only primitive types are supported. TODO: allow nested fields in the Parquet schema to be
   * flattened to a top-level field in the Cascading tuple.
+  *
+  * @author Avi Bryant
   */
 
-@Deprecated // The parquet-cascading module depends on Cascading 2.x, and is being superseded with parquet-cascading3 for Cascading 3.x
 public class ParquetTupleScheme extends Scheme<JobConf, RecordReader, OutputCollector, Object[], Object[]>{
 
   private static final long serialVersionUID = 0L;

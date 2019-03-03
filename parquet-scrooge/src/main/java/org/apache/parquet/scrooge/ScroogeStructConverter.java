@@ -48,14 +48,13 @@ import static org.apache.parquet.thrift.struct.ThriftField.Requirement.OPTIONAL;
 /**
  * Class to convert a scrooge generated class to {@link ThriftType.StructType}. {@link ScroogeReadSupport } uses this
  * class to get the requested schema
+ *
+ * @author Tianshuo Deng
  */
 public class ScroogeStructConverter {
 
   /**
    * convert a given scrooge generated class to {@link ThriftType.StructType}
-   *
-   * @param scroogeClass a scrooge class
-   * @return a thrift type descriptor for the class
    */
   public ThriftType.StructType convert(Class scroogeClass) {
     return convertStructFromClass(scroogeClass);
@@ -162,9 +161,6 @@ public class ScroogeStructConverter {
 
   /**
    * Convert a field in scrooge to ThriftField in parquet
-   *
-   * @param scroogeField a scrooge field
-   * @return a thrift field descriptor for the scrooge field
    */
   public ThriftField toThriftField(ThriftStructFieldInfo scroogeField) {
     Requirement requirement = getRequirementType(scroogeField);
@@ -193,13 +189,7 @@ public class ScroogeStructConverter {
         thriftType = new ThriftType.I64Type();
         break;
       case STRING:
-        ThriftType.StringType stringType = new ThriftType.StringType();
-        // There is no real binary type (see THRIFT-1920) in Thrift,
-        // binary data is represented by String type with an additional binary flag.
-        if (!String.class.equals(scroogeField.manifest().runtimeClass())) {
-          stringType.setBinary(true);
-        }
-        thriftType = stringType;
+        thriftType = new ThriftType.StringType();
         break;
       case STRUCT:
         thriftType = convertStructTypeField(scroogeField);

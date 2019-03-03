@@ -23,6 +23,9 @@ import org.apache.thrift.protocol.TProtocol;
 
 /**
  * reads one record from an input and writes it to an output
+ *
+ * @author Julien Le Dem
+ *
  */
 public interface ProtocolPipe {
     void readOne(TProtocol in, TProtocol out) throws TException;

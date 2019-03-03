@@ -20,6 +20,8 @@ package org.apache.parquet.column;
 
 /**
  * Container which can produce a ColumnReader for any given column in a schema.
+ *
+ * @author Julien Le Dem
  */
 public interface ColumnReadStore {
 

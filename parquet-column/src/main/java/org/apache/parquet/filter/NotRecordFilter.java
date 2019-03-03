@@ -23,6 +23,8 @@ import org.apache.parquet.column.ColumnReader;
 
 /**
  * Provides ability to negate the result of a filter.
+ *
+ * @author Frank Austin Nothaft
  */
 public final class NotRecordFilter implements RecordFilter {
 
@@ -31,7 +33,6 @@ public final class NotRecordFilter implements RecordFilter {
   /**
    * Returns builder for creating an and filter.
    * @param filter The filter to invert.
-   * @return a not record filter
    */
   public static final UnboundRecordFilter not( final UnboundRecordFilter filter) {
     Preconditions.checkNotNull( filter, "filter" );

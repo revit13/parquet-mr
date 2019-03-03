@@ -20,6 +20,9 @@ package org.apache.parquet.column.page;
 
 /**
  * Reader for a sequence a page from a given column chunk
+ *
+ * @author Julien Le Dem
+ *
  */
 public interface PageReader {
 

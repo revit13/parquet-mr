@@ -21,7 +21,6 @@ package org.apache.parquet.column.values.plain;
 
 import java.io.IOException;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.BytesUtils;
 import org.apache.parquet.column.values.ValuesReader;
 import org.apache.parquet.io.ParquetDecodingException;
@@ -31,37 +30,41 @@ import org.slf4j.LoggerFactory;
 
 public class BinaryPlainValuesReader extends ValuesReader {
   private static final Logger LOG = LoggerFactory.getLogger(BinaryPlainValuesReader.class);
-  private ByteBufferInputStream in;
+  private byte[] in;
+  private int offset;
 
   @Override
   public Binary readBytes() {
     try {
-      int length = BytesUtils.readIntLittleEndian(in);
-      return Binary.fromConstantByteBuffer(in.slice(length));
+      int length = BytesUtils.readIntLittleEndian(in, offset);
+      int start = offset + 4;
+      offset = start + length;
+      return Binary.fromConstantByteArray(in, start, length);
     } catch (IOException e) {
-      throw new ParquetDecodingException("could not read bytes at offset " + in.position(), e);
+      throw new ParquetDecodingException("could not read bytes at offset " + offset, e);
     } catch (RuntimeException e) {
-      throw new ParquetDecodingException("could not read bytes at offset " + in.position(), e);
+      throw new ParquetDecodingException("could not read bytes at offset " + offset, e);
     }
   }
 
   @Override
   public void skip() {
     try {
-      int length = BytesUtils.readIntLittleEndian(in);
-      in.skipFully(length);
+      int length = BytesUtils.readIntLittleEndian(in, offset);
+      offset += 4 + length;
     } catch (IOException e) {
-      throw new ParquetDecodingException("could not skip bytes at offset " + in.position(), e);
+      throw new ParquetDecodingException("could not skip bytes at offset " + offset, e);
     } catch (RuntimeException e) {
-      throw new ParquetDecodingException("could not skip bytes at offset " + in.position(), e);
+      throw new ParquetDecodingException("could not skip bytes at offset " + offset, e);
     }
   }
 
   @Override
-  public void initFromPage(int valueCount, ByteBufferInputStream stream)
+  public void initFromPage(int valueCount, byte[] in, int offset)
       throws IOException {
-    LOG.debug("init from page at offset {} for length {}",
-        stream.position(), (stream.available() - stream.position()));
-    this.in = stream.remainingStream();
+    LOG.debug("init from page at offset {} for length {}", offset, (in.length - offset));
+    this.in = in;
+    this.offset = offset;
   }
+
 }

@@ -19,9 +19,9 @@
 package org.apache.parquet.column.values.rle;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.apache.parquet.Preconditions;
 import org.apache.parquet.bytes.BytesUtils;
@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Decodes values written in the grammar described in {@link RunLengthBitPackingHybridEncoder}
+ *
+ * @author Julien Le Dem
  */
 public class RunLengthBitPackingHybridDecoder {
   private static final Logger LOG = LoggerFactory.getLogger(RunLengthBitPackingHybridDecoder.class);
@@ -41,14 +43,14 @@ public class RunLengthBitPackingHybridDecoder {
 
   private final int bitWidth;
   private final BytePacker packer;
-  private final InputStream in;
+  private final ByteArrayInputStream in;
 
   private MODE mode;
   private int currentCount;
   private int currentValue;
   private int[] currentBuffer;
 
-  public RunLengthBitPackingHybridDecoder(int bitWidth, InputStream in) {
+  public RunLengthBitPackingHybridDecoder(int bitWidth, ByteArrayInputStream in) {
     LOG.debug("decoding bitWidth {}", bitWidth);
 
     Preconditions.checkArgument(bitWidth >= 0 && bitWidth <= 32, "bitWidth must be >= 0 and <= 32");

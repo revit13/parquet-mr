@@ -27,6 +27,9 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 /**
  * Represents Pig meta data stored in the file footer
+ *
+ * @author Julien Le Dem
+ *
  */
 public class PigMetaData {
 

@@ -24,6 +24,8 @@ import org.apache.parquet.io.api.RecordMaterializer;
 /**
  * used to read empty schema
  *
+ * @author Mickael Lacour <m.lacour@criteo.com>
+ *
  * @param <T> the type of the materialized record
  */
 class EmptyRecordReader<T> extends RecordReader<T> {

@@ -49,6 +49,8 @@ package org.apache.parquet.io.api;
  *   }
  * }
  * </pre>
+ * @author Julien Le Dem
+ *
  */
 abstract public class RecordConsumer {
 
@@ -89,37 +91,37 @@ abstract public class RecordConsumer {
 
   /**
    * add an int value in the current field
-   * @param value an int value
+   * @param value
    */
   abstract public void addInteger(int value);
 
   /**
    * add a long value in the current field
-   * @param value a long value
+   * @param value
    */
   abstract public void addLong(long value);
 
   /**
    * add a boolean value in the current field
-   * @param value a boolean value
+   * @param value
    */
   abstract public void addBoolean(boolean value);
 
   /**
    * add a binary value in the current field
-   * @param value a binary value
+   * @param value
    */
   abstract public void addBinary(Binary value);
 
   /**
    * add a float value in the current field
-   * @param value a float value
+   * @param value
    */
   abstract public void addFloat(float value);
 
   /**
    * add a double value in the current field
-   * @param value a double value
+   * @param value
    */
   abstract public void addDouble(double value);
 

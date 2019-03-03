@@ -30,6 +30,10 @@ import org.apache.parquet.thrift.FieldIgnoredHandler;
 
 /**
  * Output format that turns Thrift bytes into Parquet format using the thrift TProtocol layer
+ *
+ *
+ * @author Julien Le Dem
+ *
  */
 public class ParquetThriftBytesOutputFormat extends ParquetOutputFormat<BytesWritable> {
 

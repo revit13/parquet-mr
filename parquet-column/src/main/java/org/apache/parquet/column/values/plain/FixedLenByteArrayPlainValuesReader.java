@@ -19,7 +19,6 @@
 package org.apache.parquet.column.values.plain;
 
 import java.io.IOException;
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.column.values.ValuesReader;
 import org.apache.parquet.io.ParquetDecodingException;
 import org.apache.parquet.io.api.Binary;
@@ -28,12 +27,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * ValuesReader for FIXED_LEN_BYTE_ARRAY.
+ *
+ * @author David Z. Chen <dchen@linkedin.com>
  */
 public class FixedLenByteArrayPlainValuesReader extends ValuesReader {
   private static final Logger LOG = LoggerFactory.getLogger(FixedLenByteArrayPlainValuesReader.class);
-
-  private final int length;
-  private ByteBufferInputStream in;
+  private byte[] in;
+  private int offset;
+  private int length;
 
   public FixedLenByteArrayPlainValuesReader(int length) {
     this.length = length;
@@ -42,31 +43,24 @@ public class FixedLenByteArrayPlainValuesReader extends ValuesReader {
   @Override
   public Binary readBytes() {
     try {
-      return Binary.fromConstantByteBuffer(in.slice(length));
-    } catch (IOException | RuntimeException e) {
-      throw new ParquetDecodingException("could not read bytes at offset " + in.position(), e);
+      int start = offset;
+      offset = start + length;
+      return Binary.fromConstantByteArray(in, start, length);
+    } catch (RuntimeException e) {
+      throw new ParquetDecodingException("could not read bytes at offset " + offset, e);
     }
   }
 
   @Override
   public void skip() {
-    skip(1);
+    offset += length;
   }
 
   @Override
-  public void skip(int n) {
-    try {
-      in.skipFully(n * length);
-    } catch (IOException | RuntimeException e) {
-      throw new ParquetDecodingException("could not skip bytes at offset " + in.position(), e);
-    }
-  }
-
-  @Override
-  public void initFromPage(int valueCount, ByteBufferInputStream stream)
+  public void initFromPage(int valueCount, byte[] in, int offset)
       throws IOException {
-    LOG.debug("init from page at offset {} for length {}",
-        stream.position(), stream.available());
-    this.in = stream.remainingStream();
+    LOG.debug("init from page at offset {} for length {}", offset, (in.length - offset));
+    this.in = in;
+    this.offset = offset;
   }
 }

@@ -31,10 +31,6 @@ public final class Registry {
     registry.put("schema", ShowSchemaCommand.class);
     registry.put("meta", ShowMetaCommand.class);
     registry.put("dump", DumpCommand.class);
-    registry.put("merge", MergeCommand.class);
-    registry.put("rowcount", RowCountCommand.class);
-    registry.put("size", SizeCommand.class);
-    registry.put("column-index", ColumnIndexCommand.class);
   }
 
   public static Map<String,Command> allCommands() {
@@ -42,7 +38,7 @@ public final class Registry {
     for (Map.Entry<String,Class<? extends Command>> entry : registry.entrySet()) {
       try {
         results.put(entry.getKey(), entry.getValue().newInstance());
-      } catch (Exception ex) {
+      } catch (Throwable th) {
       }
     }
 
@@ -57,7 +53,7 @@ public final class Registry {
 
     try {
       return clazz.newInstance();
-    } catch (Exception ex) {
+    } catch (Throwable th) {
       return null;
     }
   }

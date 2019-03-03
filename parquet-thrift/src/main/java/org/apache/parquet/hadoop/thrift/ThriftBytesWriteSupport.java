@@ -19,8 +19,6 @@
 package org.apache.parquet.hadoop.thrift;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
@@ -30,8 +28,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.apache.parquet.hadoop.BadConfigurationException;
 import org.apache.parquet.hadoop.api.WriteSupport;
 import org.apache.parquet.io.ColumnIOFactory;
@@ -48,7 +45,6 @@ import org.apache.parquet.thrift.ThriftSchemaConverter;
 import org.apache.parquet.thrift.struct.ThriftType.StructType;
 
 public class ThriftBytesWriteSupport extends WriteSupport<BytesWritable> {
-  private static final Logger LOG = LoggerFactory.getLogger(ThriftBytesWriteSupport.class);
   private static final String PARQUET_PROTOCOL_CLASS = "parquet.protocol.class";
 
   public static <U extends TProtocol> void setTProtocolClass(Configuration conf, Class<U> tProtocolClass) {
@@ -117,8 +113,9 @@ public class ThriftBytesWriteSupport extends WriteSupport<BytesWritable> {
     } else {
       thriftClass = TBaseWriteSupport.getThriftClass(configuration);
     }
-    this.thriftStruct = ThriftSchemaConverter.toStructType(thriftClass);
-    this.schema = ThriftSchemaConverter.convertWithoutProjection(thriftStruct);
+    ThriftSchemaConverter thriftSchemaConverter = new ThriftSchemaConverter();
+    this.thriftStruct = thriftSchemaConverter.toStructType(thriftClass);
+    this.schema = thriftSchemaConverter.convert(thriftStruct);
     if (buffered) {
       readToWrite = new BufferedProtocolReadToWrite(thriftStruct, errorHandler);
     } else {
@@ -127,12 +124,13 @@ public class ThriftBytesWriteSupport extends WriteSupport<BytesWritable> {
     return thriftWriteSupport.init(configuration);
   }
 
-  private static Method SET_READ_LENGTH;
+  private static boolean IS_READ_LENGTH_SETABLE = false;
   static {
     try {
-      SET_READ_LENGTH = TBinaryProtocol.class.getMethod("setReadLength", int.class);
+      TBinaryProtocol.class.getMethod("setReadLength", int.class);
+      IS_READ_LENGTH_SETABLE = true;
     } catch (NoSuchMethodException e) {
-      SET_READ_LENGTH = null;
+      IS_READ_LENGTH_SETABLE = false;
     }
   }
 
@@ -141,15 +139,10 @@ public class ThriftBytesWriteSupport extends WriteSupport<BytesWritable> {
 
     /* Reduce the chance of OOM when data is corrupted. When readBinary is called on TBinaryProtocol, it reads the length of the binary first,
      so if the data is corrupted, it could read a big integer as the length of the binary and therefore causes OOM to happen.
-     Currently this fix only applies to TBinaryProtocol which has the setReadLength defined (thrift 0.7).
+     Currently this fix only applies to TBinaryProtocol which has the setReadLength defined.
       */
-    if (SET_READ_LENGTH != null && protocol instanceof TBinaryProtocol) {
-      try {
-        SET_READ_LENGTH.invoke(protocol, new Object[]{record.getLength()});
-      } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-        LOG.warn("setReadLength should not throw an exception", e);
-        SET_READ_LENGTH = null;
-      }
+    if (IS_READ_LENGTH_SETABLE && protocol instanceof TBinaryProtocol) {
+      ((TBinaryProtocol)protocol).setReadLength(record.getLength());
     }
 
     return protocol;

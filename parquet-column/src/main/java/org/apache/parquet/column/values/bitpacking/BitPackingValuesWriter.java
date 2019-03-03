@@ -24,7 +24,6 @@ import static org.apache.parquet.column.values.bitpacking.BitPacking.getBitPacki
 
 import java.io.IOException;
 
-import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.bytes.CapacityByteArrayOutputStream;
 import org.apache.parquet.column.Encoding;
@@ -34,6 +33,9 @@ import org.apache.parquet.io.ParquetEncodingException;
 
 /**
  * a column writer that packs the ints in the number of bits required based on the maximum size.
+ *
+ * @author Julien Le Dem
+ *
  */
 public class BitPackingValuesWriter extends ValuesWriter {
 
@@ -43,13 +45,11 @@ public class BitPackingValuesWriter extends ValuesWriter {
 
   /**
    * @param bound the maximum value stored by this column
-   * @param initialCapacity initial capacity for the writer
-   * @param pageSize the page size
-   * @param allocator a buffer allocator
+   * @param pageSize
    */
-  public BitPackingValuesWriter(int bound, int initialCapacity, int pageSize, ByteBufferAllocator allocator) {
+  public BitPackingValuesWriter(int bound, int initialCapacity, int pageSize) {
     this.bitsPerValue = getWidthFromMaxInt(bound);
-    this.out = new CapacityByteArrayOutputStream(initialCapacity, pageSize, allocator);
+    this.out = new CapacityByteArrayOutputStream(initialCapacity, pageSize);
     init();
   }
 
@@ -101,11 +101,6 @@ public class BitPackingValuesWriter extends ValuesWriter {
   public void reset() {
     out.reset();
     init();
-  }
-
-  @Override
-  public void close() {
-    out.close();
   }
 
   /**

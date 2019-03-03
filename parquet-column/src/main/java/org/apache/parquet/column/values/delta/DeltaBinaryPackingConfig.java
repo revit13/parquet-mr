@@ -28,6 +28,8 @@ import java.io.InputStream;
 
 /**
  * Config for delta binary packing
+ *
+ * @author Tianshuo Deng
  */
 class DeltaBinaryPackingConfig {
   final int blockSizeInValues;

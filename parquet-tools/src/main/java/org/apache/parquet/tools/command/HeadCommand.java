@@ -64,11 +64,6 @@ public class HeadCommand extends ArgsOnlyCommand {
   }
 
   @Override
-  public String getCommandDescription() {
-    return "Prints the first n record of the Parquet file";
-  }
-
-  @Override
   public void execute(CommandLine options) throws Exception {
     super.execute(options);
 
@@ -83,7 +78,7 @@ public class HeadCommand extends ArgsOnlyCommand {
     ParquetReader<SimpleRecord> reader = null;
     try {
       PrintWriter writer = new PrintWriter(Main.out, true);
-      reader = ParquetReader.builder(new SimpleReadSupport(), new Path(input)).build();
+      reader = new ParquetReader<SimpleRecord>(new Path(input), new SimpleReadSupport());
       for (SimpleRecord value = reader.read(); value != null && num-- > 0; value = reader.read()) {
         value.prettyPrint(writer);
         writer.println();

@@ -29,37 +29,46 @@ import org.apache.parquet.column.values.bitpacking.BitPacking.BitPackingWriter;
 // TODO: rework the whole thing. It does not need to use streams at all
 /**
  * provides the correct implementation of a bitpacking based on the width in bits
+ *
+ * @author Julien Le Dem
+ *
  */
 public class BitPacking {
 
   /**
    * to writes ints to a stream packed to only the needed bits.
    * there is no guarantee of corecteness if ints larger than the max size are written
+   *
+   * @author Julien Le Dem
+   *
    */
   abstract public static class BitPackingWriter {
     /**
      * will write the bits to the underlying stream aligned on the buffer size
      * @param val the value to encode
-     * @throws IOException if there is an exception while writing
+     * @throws IOException
      */
     abstract public void write(int val) throws IOException;
 
     /**
      * will flush the buffer to the underlying stream (and pad with 0s)
-     * @throws IOException if there is an exception while finishing
+     * @throws IOException
      */
     abstract public void finish() throws IOException;
   }
 
   /**
    * to read back what has been written with the corresponding  writer
+   *
+   * @author Julien Le Dem
+   *
    */
   abstract public static class BitPackingReader {
 
     /**
      *
      * @return and int decoded from the underlying stream
-     * @throws IOException if there is an exception while reading
+     * @throws IOException
      */
     abstract public int read() throws IOException;
   }
@@ -101,7 +110,6 @@ public class BitPacking {
    *
    * @param bitLength the width in bits of the integers to read
    * @param in the stream to read the bytes from
-   * @param valueCount not sure
    * @return the correct implementation for the width
    */
   public static BitPackingReader createBitPackingReader(int bitLength, InputStream in, long valueCount) {

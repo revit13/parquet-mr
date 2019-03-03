@@ -18,22 +18,16 @@
 # under the License.
 #
 
-set -e
-
-if [ -z "$2" ]; then
-    cat <<EOF
-Usage: $0 <release-version> <new-development-version-without-SNAPSHOT-suffix>
-Example: $0 1.6.0 1.7.0
-EOF
-  exit 1
+if [ -z "$1" ]; then
+  echo "Usage: $0 <version>"
+  exit
 fi
 
-release_version="$1"
-new_development_version="$2-SNAPSHOT"
+version=$1
 
-tag="apache-parquet-$release_version"
+tag=apache-parquet-$version
 
 mvn release:clean
-mvn release:prepare -Dtag="$tag" "-DreleaseVersion=$release_version" -DdevelopmentVersion="$new_development_version"
+mvn release:prepare -Dtag=$tag -DreleaseVersion=$version
 
-echo "Finish staging binary artifacts by running: mvn release:perform"
+echo "Finish staging binary artifacts by running: sh dev/perform-release.sh"

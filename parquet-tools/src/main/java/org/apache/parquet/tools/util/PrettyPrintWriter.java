@@ -79,7 +79,7 @@ public class PrettyPrintWriter extends PrintWriter {
     if (columns != null && !columns.isEmpty()) {
       try {
         consoleWidth = Integer.parseInt(columns);
-      } catch (Exception ex) {
+      } catch (Throwable th) {
       }
     }
 
@@ -88,7 +88,7 @@ public class PrettyPrintWriter extends PrintWriter {
       try {
         numColors = Integer.parseInt(colors);
         if (numColors < 0) numColors = 0;
-      } catch (Exception exa) {
+      } catch (Throwable th) {
       }
     }
 

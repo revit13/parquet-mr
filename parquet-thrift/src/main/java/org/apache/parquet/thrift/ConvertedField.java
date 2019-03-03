@@ -36,8 +36,6 @@ public interface ConvertedField {
 
   /**
    * The path from the root of the schema to this field.
-   *
-   * @return the fields path
    */
   FieldsPath path();
 

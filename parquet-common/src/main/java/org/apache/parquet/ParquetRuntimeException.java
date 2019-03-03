@@ -18,11 +18,11 @@
  */
 package org.apache.parquet;
 
-import java.io.Closeable;
-import java.io.IOException;
-
 /**
  * The parent class for all runtime exceptions
+ *
+ * @author Julien Le Dem
+ *
  */
 abstract public class ParquetRuntimeException extends RuntimeException {
   private static final long serialVersionUID = 1L;
@@ -42,4 +42,5 @@ abstract public class ParquetRuntimeException extends RuntimeException {
   public ParquetRuntimeException(Throwable cause) {
     super(cause);
   }
+
 }

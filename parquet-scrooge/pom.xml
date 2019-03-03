@@ -21,7 +21,7 @@
     <groupId>org.apache.parquet</groupId>
     <artifactId>parquet</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.12.0-SNAPSHOT</version>
+    <version>1.8.2-GG</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -55,12 +55,6 @@
       <artifactId>hadoop-client</artifactId>
       <version>${hadoop.version}</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.parquet</groupId>
@@ -98,7 +92,7 @@
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>scrooge-core_${scala.binary.version}</artifactId>
-      <version>4.7.0</version>
+      <version>3.17.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.parquet</groupId>
@@ -144,9 +138,9 @@
 
       <!--for scrooge and thrift -->
         <plugin>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>thrift-maven-plugin</artifactId>
-            <version>${thrift-maven-plugin.version}</version>
+            <groupId>org.apache.thrift.tools</groupId>
+            <artifactId>maven-thrift-plugin</artifactId>
+            <version>0.1.10</version>
             <configuration>
                 <thriftExecutable>${thrift.executable}</thriftExecutable>
             </configuration>

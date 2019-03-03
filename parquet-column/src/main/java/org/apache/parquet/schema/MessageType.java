@@ -1,4 +1,4 @@
-/*
+/* 
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -26,6 +26,9 @@ import org.apache.parquet.io.InvalidRecordException;
 
 /**
  * The root of a schema
+ *
+ * @author Julien Le Dem
+ *
  */
 public final class MessageType extends GroupType {
 
@@ -62,14 +65,13 @@ public final class MessageType extends GroupType {
   public void writeToStringBuilder(StringBuilder sb, String indent) {
     sb.append("message ")
         .append(getName())
-        .append(getLogicalTypeAnnotation() == null ? "" : " (" + getLogicalTypeAnnotation().toString() +")")
+        .append(getOriginalType() == null ? "" : " (" + getOriginalType() +")")
         .append(" {\n");
     membersDisplayString(sb, "  ");
     sb.append("}\n");
   }
 
   /**
-   * @param path an array of strings representing the name path in this type
    * @return the max repetition level that might be needed to encode the
    * type at 'path'.
    */
@@ -78,7 +80,6 @@ public final class MessageType extends GroupType {
   }
 
   /**
-   * @param path an array of strings representing the name path in this type
    * @return the max repetition level that might be needed to encode the
    * type at 'path'.
    */
@@ -94,7 +95,8 @@ public final class MessageType extends GroupType {
     int maxRep = getMaxRepetitionLevel(path);
     int maxDef = getMaxDefinitionLevel(path);
     PrimitiveType type = getType(path).asPrimitiveType();
-    return new ColumnDescriptor(path, type, maxRep, maxDef);
+    return new ColumnDescriptor(path, type.getPrimitiveTypeName(),
+                                type.getTypeLength(), maxRep, maxDef);
   }
 
   public List<String[]> getPaths() {
@@ -109,7 +111,8 @@ public final class MessageType extends GroupType {
       PrimitiveType primitiveType = getType(path).asPrimitiveType();
       columns.add(new ColumnDescriptor(
                       path,
-                      primitiveType,
+                      primitiveType.getPrimitiveTypeName(),
+                      primitiveType.getTypeLength(),
                       getMaxRepetitionLevel(path),
                       getMaxDefinitionLevel(path)));
     }

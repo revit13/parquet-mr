@@ -29,6 +29,9 @@ import org.apache.parquet.schema.MessageType;
 
 /**
  * File level meta data (Schema, codec, ...)
+ *
+ * @author Julien Le Dem
+ *
  */
 public final class FileMetaData implements Serializable {
   private static final long serialVersionUID = 1L;

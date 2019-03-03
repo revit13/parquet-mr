@@ -20,14 +20,12 @@ package org.apache.parquet.column.values.deltalengthbytearray;
 
 import java.io.IOException;
 
-import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.bytes.CapacityByteArrayOutputStream;
 import org.apache.parquet.bytes.LittleEndianDataOutputStream;
 import org.apache.parquet.column.Encoding;
 import org.apache.parquet.column.values.ValuesWriter;
 import org.apache.parquet.column.values.delta.DeltaBinaryPackingValuesWriter;
-import org.apache.parquet.column.values.delta.DeltaBinaryPackingValuesWriterForInteger;
 import org.apache.parquet.io.ParquetEncodingException;
 import org.apache.parquet.io.api.Binary;
 import org.slf4j.Logger;
@@ -40,6 +38,7 @@ import org.slf4j.LoggerFactory;
  *   delta-length-byte-array : length* byte-array*
  *   }
  * </pre>
+ * @author Aniket Mokashi
  *
  */
 public class DeltaLengthByteArrayValuesWriter extends ValuesWriter {
@@ -50,13 +49,13 @@ public class DeltaLengthByteArrayValuesWriter extends ValuesWriter {
   private CapacityByteArrayOutputStream arrayOut;
   private LittleEndianDataOutputStream out;
 
-  public DeltaLengthByteArrayValuesWriter(int initialSize, int pageSize, ByteBufferAllocator allocator) {
-    arrayOut = new CapacityByteArrayOutputStream(initialSize, pageSize, allocator);
+  public DeltaLengthByteArrayValuesWriter(int initialSize, int pageSize) {
+    arrayOut = new CapacityByteArrayOutputStream(initialSize, pageSize);
     out = new LittleEndianDataOutputStream(arrayOut);
-    lengthWriter = new DeltaBinaryPackingValuesWriterForInteger(
+    lengthWriter = new DeltaBinaryPackingValuesWriter(
         DeltaBinaryPackingValuesWriter.DEFAULT_NUM_BLOCK_VALUES,
         DeltaBinaryPackingValuesWriter.DEFAULT_NUM_MINIBLOCKS,
-        initialSize, pageSize, allocator);
+        initialSize, pageSize);
   }
 
   @Override
@@ -97,12 +96,6 @@ public class DeltaLengthByteArrayValuesWriter extends ValuesWriter {
   }
 
   @Override
-  public void close() {
-    lengthWriter.close();
-    arrayOut.close();
-  }
-
-  @Override
   public long getAllocatedSize() {
     return lengthWriter.getAllocatedSize() + arrayOut.getCapacity();
   }
@@ -112,4 +105,3 @@ public class DeltaLengthByteArrayValuesWriter extends ValuesWriter {
     return arrayOut.memUsageString(lengthWriter.memUsageString(prefix) + " DELTA_LENGTH_BYTE_ARRAY");
   }
 }
-

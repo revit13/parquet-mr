@@ -19,12 +19,10 @@
 package org.apache.parquet.column.values.bitpacking;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.Arrays;
 
-import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.BytesUtils;
 import org.apache.parquet.column.values.ValuesReader;
-import org.apache.parquet.io.ParquetDecodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +35,9 @@ public class ByteBitPackingValuesReader extends ValuesReader {
   private final BytePacker packer;
   private final int[] decoded = new int[VALUES_AT_A_TIME];
   private int decodedPosition = VALUES_AT_A_TIME - 1;
-  private ByteBufferInputStream in;
+  private byte[] encoded;
+  private int encodedPos;
+  private int nextOffset;
 
   public ByteBitPackingValuesReader(int bound, Packer packer) {
     this.bitWidth = BytesUtils.getWidthFromMaxInt(bound);
@@ -48,39 +48,32 @@ public class ByteBitPackingValuesReader extends ValuesReader {
   public int readInteger() {
     ++ decodedPosition;
     if (decodedPosition == decoded.length) {
-      try {
-        if (in.available() < bitWidth) {
-          // unpack8Values needs at least bitWidth bytes to read from,
-          // We have to fill in 0 byte at the end of encoded bytes.
-          byte[] tempEncode = new byte[bitWidth];
-          in.read(tempEncode, 0, in.available());
-          packer.unpack8Values(tempEncode, 0, decoded, 0);
-        } else {
-          ByteBuffer encoded = in.slice(bitWidth);
-          packer.unpack8Values(encoded, encoded.position(), decoded, 0);
-        }
-      } catch (IOException e) {
-        throw new ParquetDecodingException("Failed to read packed values", e);
+      if (encodedPos + bitWidth > encoded.length) {
+        packer.unpack8Values(Arrays.copyOfRange(encoded, encodedPos, encodedPos + bitWidth), 0, decoded, 0);
+      } else {
+        packer.unpack8Values(encoded, encodedPos, decoded, 0);
       }
+      encodedPos += bitWidth;
       decodedPosition = 0;
     }
     return decoded[decodedPosition];
   }
 
   @Override
-  public void initFromPage(int valueCount, ByteBufferInputStream stream)
+  public void initFromPage(int valueCount, byte[] page, int offset)
       throws IOException {
     int effectiveBitLength = valueCount * bitWidth;
     int length = BytesUtils.paddedByteCountFromBits(effectiveBitLength); // ceil
-    LOG.debug("reading {} bytes for {} values of size {} bits.",
-        length, valueCount, bitWidth);
-    // work-around for null values. this will not happen for repetition or
-    // definition levels (never null), but will happen when valueCount has not
-    // been adjusted for null values in the data.
-    length = Math.min(length, stream.available());
-    this.in = stream.sliceStream(length);
+    LOG.debug("reading {} bytes for {} values of size {} bits.", length, valueCount, bitWidth);
+    this.encoded = page;
+    this.encodedPos = offset;
     this.decodedPosition = VALUES_AT_A_TIME - 1;
-    updateNextOffset(length);
+    this.nextOffset = offset + length;
+  }
+  
+  @Override
+  public int getNextOffset() {
+    return nextOffset;
   }
 
   @Override
